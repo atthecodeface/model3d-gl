@@ -90,19 +90,14 @@ pub enum GlShaderType {
 /// A single GlBuffer will be cloned for different
 /// model3d_base::BufferView of the same BufferData (by the
 /// [VertexBuffer] type)
-pub trait GlBuffer<G: Gl + model3d_base::Renderable<Buffer = Self>>:
-    model3d_base::BufferClient<G> + Default + Clone + std::fmt::Debug
-{
-}
+pub trait GlBuffer<G>: Default + Clone + std::fmt::Debug + model3d_base::BufferClient<G> {}
 
 //tt Gl
-pub trait Gl: model3d_base::Renderable {
+pub trait Gl {
     type Id: Sized;
     type Shader: GlShader;
     type Program: GlProgram;
-    // type Buffer = <Self as model3d_base::Renderable>::Buffer
-    // type Buffer = model3d_base::Renderable::Buffer
-    // Self as  <Self GlBuffer + model3d_base::BufferClient<Self>;
+    type Buffer: GlBuffer<Self>;
 
     //fp link_program
     /// Create a program from a list of compiled shaders

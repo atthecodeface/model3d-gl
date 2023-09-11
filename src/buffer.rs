@@ -35,13 +35,12 @@ use crate::{Gl, GlBuffer};
 ///
 /// OpenGL will have one copy of the data for all the [VertexBuffer]
 #[derive(Debug, Clone)]
-pub struct VertexBuffer<R, B>
+pub struct VertexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     /// Ref-counted buffer
-    gl_buffer: B,
+    gl_buffer: G::Buffer,
     /// Number of elements per vertex - 1 to 4
     pub count: u32,
     /// The type of each element
@@ -50,25 +49,24 @@ where
     pub byte_offset: u32,
     /// Stride of data in the buffer - 0 for count*sizeof(ele_type)
     pub stride: u32,
-    phantom: PhantomData<R>,
+    //    phantom: PhantomData<R>,
 }
 
 //ip VertexBuffer
-impl<R, B> VertexBuffer<R, B>
+impl<G> VertexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     //ap gl_buffer
     /// Get the gl_buffer associated with the data, assuming its
     /// `gl_create` method has been invoked at least once
-    pub fn gl_buffer(&self) -> &B {
+    pub fn gl_buffer(&self) -> &G::Buffer {
         &self.gl_buffer
     }
 
     //mp of_view
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    fn of_view(&mut self, view: &model3d_base::BufferView<R>, render_context: &mut R::Context) {
+    fn of_view(&mut self, view: &model3d_base::BufferView<G>, render_context: &mut G) {
         view.data.create_client(render_context);
         self.count = view.count;
         self.ele_type = view.ele_type;
@@ -81,13 +79,12 @@ where
 }
 
 //ip Default for VertexBuffer
-impl<R, B> Default for VertexBuffer<R, B>
+impl<G> Default for VertexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     fn default() -> Self {
-        let gl_buffer = B::default();
+        let gl_buffer = <G as Gl>::Buffer::default();
         let count = 0;
         let ele_type = BufferElementType::Float32;
         let byte_offset = 0;
@@ -98,16 +95,15 @@ where
             ele_type,
             byte_offset,
             stride,
-            phantom: PhantomData,
+            //            phantom: PhantomData,
         }
     }
 }
 
 //ip Display for VertexBuffer
-impl<R, B> std::fmt::Display for VertexBuffer<R, B>
+impl<G> std::fmt::Display for VertexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone + std::fmt::Debug,
+    G: Gl,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         write!(
@@ -119,12 +115,7 @@ where
 }
 
 //ip DefaultIndentedDisplay for VertexBuffer
-impl<R, B> indent_display::DefaultIndentedDisplay for VertexBuffer<R, B>
-where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
-{
-}
+impl<G> indent_display::DefaultIndentedDisplay for VertexBuffer<G> where G: Gl {}
 
 //a IndexBuffer
 //tp IndexBuffer
@@ -134,25 +125,23 @@ where
 /// An IndexBuffer directly owns the OpenGL buffer which is an
 /// ElementArray rather than vertex data
 #[derive(Debug, Clone)]
-pub struct IndexBuffer<R, B>
+pub struct IndexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     /// Ref-counted buffer
-    gl_buffer: B,
+    gl_buffer: G::Buffer,
     /// Number of elements per index - 1 to 4
     pub count: u32,
     /// The type of each element
     pub ele_type: BufferElementType,
-    phantom: PhantomData<R>,
+    //    phantom: PhantomData<R>,
 }
 
 //ip Default for IndexBuffer
-impl<R, B> Default for IndexBuffer<R, B>
+impl<G> Default for IndexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     fn default() -> Self {
         let gl_buffer = B::default();
@@ -162,20 +151,19 @@ where
             gl_buffer,
             count,
             ele_type,
-            phantom: PhantomData,
+            //            phantom: PhantomData,
         }
     }
 }
 
 //ip IndexBuffer
-impl<R, B> IndexBuffer<R, B>
+impl<G> IndexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     //mp of_view
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    fn of_view(view: &model3d_base::BufferView<R>, _render_context: &mut R::Context) -> Self {
+    fn of_view(view: &model3d_base::BufferView<G>, _render_context: &mut G) -> Self {
         let mut gl_buffer = B::default();
         // gl_buffer.of_indices(view);
         let count = view.count;
@@ -196,10 +184,9 @@ where
 }
 
 //ip Display for IndexBuffer
-impl<R, B> std::fmt::Display for IndexBuffer<R, B>
+impl<G> std::fmt::Display for IndexBuffer<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone + std::fmt::Debug,
+    G: Gl,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         write!(
@@ -211,34 +198,27 @@ where
 }
 
 //ip DefaultIndentedDisplay for IndexBuffer
-impl<R, B> indent_display::DefaultIndentedDisplay for IndexBuffer<R, B>
-where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
-{
-}
+impl<G> indent_display::DefaultIndentedDisplay for IndexBuffer<G> where G: Gl {}
 
 //a BufferView
 //tp BufferView
 ///
 /// A view of data with either vertices of indices
 #[derive(Debug, Clone)]
-pub enum BufferView<R, B>
+pub enum BufferView<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     /// Vertex buffer
-    VertexBuffer(VertexBuffer<R, B>),
+    VertexBuffer(VertexBuffer<G>),
     /// Index buffer
-    IndexBuffer(IndexBuffer<R, B>),
+    IndexBuffer(IndexBuffer<G>),
 }
 
 //ip Default for BufferView<G>
-impl<R, B> Default for BufferView<R, B>
+impl<G> Default for BufferView<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     fn default() -> Self {
         Self::VertexBuffer(VertexBuffer::default())
@@ -246,15 +226,14 @@ where
 }
 
 //ip BufferView
-impl<R, B> BufferView<R, B>
+impl<G> BufferView<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     //fp as_index_buffer
     /// Return the [IndexBuffer] that this [BufferView] is of - if it
     /// is not a view of indices then panic
-    pub fn as_index_buffer(&self) -> &IndexBuffer<R, B> {
+    pub fn as_index_buffer(&self) -> &IndexBuffer<G> {
         match self {
             Self::IndexBuffer(index_buffer) => index_buffer,
             _ => panic!("Attempt to borrow a VertexBuffer as an IndexBuffer"),
@@ -264,7 +243,7 @@ where
     //fp as_vertex_buffer
     /// Return the [VertexBuffer] that this [BufferView] is of - if it
     /// is not a view of vertex attributess then panic
-    pub fn as_vertex_buffer(&self) -> &VertexBuffer<R, B> {
+    pub fn as_vertex_buffer(&self) -> &VertexBuffer<G> {
         match self {
             Self::VertexBuffer(vertex_buffer) => vertex_buffer,
             _ => panic!("Attempt to borrow an IndexBuffer as an VertexBuffer"),
@@ -273,18 +252,17 @@ where
 }
 
 //ip ViewClient for BufferView
-impl<R, B> ViewClient<R> for BufferView<R, B>
+impl<G> ViewClient<G> for BufferView<G>
 where
-    R: model3d_base::Renderable<Buffer = B, View = Self> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     //mp create
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
     fn create(
         &mut self,
-        view: &model3d_base::BufferView<R>,
+        view: &model3d_base::BufferView<G>,
         attr: VertexAttr,
-        render_context: &mut R::Context,
+        render_context: &mut G,
     ) {
         if attr == VertexAttr::Indices {
             let index_buffer = IndexBuffer::of_view(view, render_context);
@@ -303,10 +281,9 @@ where
 }
 
 //ip Display for BufferView
-impl<R, B> std::fmt::Display for BufferView<R, B>
+impl<G> std::fmt::Display for BufferView<G>
 where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
+    G: Gl,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
         match self {
@@ -317,9 +294,4 @@ where
 }
 
 //ip DefaultIndentedDisplay for BufferView
-impl<R, B> indent_display::DefaultIndentedDisplay for BufferView<R, B>
-where
-    R: model3d_base::Renderable<Buffer = B> + std::fmt::Debug,
-    B: model3d_base::BufferClient<R> + Clone,
-{
-}
+impl<G> indent_display::DefaultIndentedDisplay for BufferView<G> where G: Gl {}

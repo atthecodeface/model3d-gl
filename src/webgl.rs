@@ -36,18 +36,11 @@ impl std::ops::Deref for Model3DWebGL {
 
 //ip Gl for Model3DWebGL
 //ip model3d_base::Renderable for Model3DWebGL
-impl model3d_base::Renderable for Model3DWebGL {
-    type Context = Self;
-    type Buffer = buffer::Buffer;
-    type View = crate::BufferView<Self, buffer::Buffer>;
-    type Texture = crate::Texture;
-    type Material = crate::Material;
-    type Vertices = crate::Vertices<Self, buffer::Buffer>;
-}
 impl Gl for Model3DWebGL {
     type Id = u32;
     type Shader = Shader;
     type Program = Program;
+    type Buffer = buffer::Buffer;
 
     //fp link_program
     /// Create a program from a list of compiled shaders
@@ -74,4 +67,13 @@ impl Gl for Model3DWebGL {
             self.context.use_program(None);
         }
     }
+}
+
+impl model3d_base::Renderable for Model3DWebGL {
+    type Context = Self;
+    type Buffer = buffer::Buffer;
+    type View = crate::BufferView<Self>;
+    type Texture = crate::Texture;
+    type Material = crate::Material;
+    type Vertices = crate::Vertices<Self>;
 }
