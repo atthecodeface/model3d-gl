@@ -3,7 +3,7 @@
 //a Texture
 //tp Texture
 /// A null texture for now
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Texture(u32);
 impl std::fmt::Display for Texture {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {

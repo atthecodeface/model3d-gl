@@ -35,7 +35,6 @@ impl std::ops::Deref for Model3DWebGL {
 }
 
 //ip Gl for Model3DWebGL
-//ip model3d_base::Renderable for Model3DWebGL
 impl Gl for Model3DWebGL {
     type Id = u32;
     type Shader = Shader;
@@ -67,13 +66,58 @@ impl Gl for Model3DWebGL {
             self.context.use_program(None);
         }
     }
+    fn init_buffer_of_indices(
+        &mut self,
+        buffer: &mut <Self as Gl>::Buffer,
+        view: &model3d_base::BufferView<Self>,
+    ) {
+        buffer.of_indices(view, self);
+    }
 }
 
+//ip model3d_base::Renderable for Model3DWebGL
 impl model3d_base::Renderable for Model3DWebGL {
-    type Context = Self;
     type Buffer = buffer::Buffer;
     type View = crate::BufferView<Self>;
     type Texture = crate::Texture;
     type Material = crate::Material;
     type Vertices = crate::Vertices<Self>;
+
+    /// Initialize a BufferData client
+    ///
+    /// This may be called multiple times for the same [BufferData]; if the
+    /// gl buffer is 0 then create, else it already exists with the same data
+    fn init_buffer_data_client(
+        &mut self,
+        client: &mut Self::Buffer,
+        buffer_data: &model3d_base::BufferData<Self>,
+    ) {
+        if client.is_none() {
+            client.of_data(buffer_data, self)
+        }
+    }
+
+    /// Initialize a buffer view client
+    fn init_buffer_view_client(
+        &mut self,
+        client: &mut Self::View,
+        buffer_view: &model3d_base::BufferView<Self>,
+        attr: model3d_base::VertexAttr,
+    ) {
+        client.init_buffer_view_client(buffer_view, attr, self);
+    }
+    fn create_vertices_client(
+        &mut self,
+        vertices: &model3d_base::Vertices<Self>,
+    ) -> Self::Vertices {
+        Self::Vertices::create(vertices, self)
+    }
+
+    fn init_material_client(
+        &mut self,
+        client: &mut Self::Material,
+        material: &dyn model3d_base::Material<Self>,
+    ) {
+    }
+    //zz All done
 }

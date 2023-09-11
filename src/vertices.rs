@@ -17,7 +17,6 @@ limitations under the License.
  */
 
 //a Imports
-use model3d_base::VertexAttr;
 use std::rc::Rc;
 
 use crate::{Gl, IndexBuffer, VertexBuffer};
@@ -61,6 +60,32 @@ impl<G> Vertices<G>
 where
     G: Gl,
 {
+    //mp create
+    /// Create based on [model3d_rs::Vertices]
+    pub fn create(vertices: &model3d_base::Vertices<G>, _renderer: &mut G) -> Self {
+        let indices = vertices
+            .borrow_indices()
+            .borrow_client()
+            .as_index_buffer()
+            .clone()
+            .into();
+        let position = vertices
+            .borrow_position()
+            .borrow_client()
+            .as_vertex_buffer()
+            .clone()
+            .into();
+        let mut attrs = Vec::new();
+        for (attr, buffer) in vertices.iter_attrs() {
+            attrs.push((*attr, buffer.borrow_client().as_vertex_buffer().clone()));
+        }
+        let attrs = attrs.into();
+        Self {
+            indices,
+            position,
+            attrs,
+        }
+    }
     //fp borrow
     /// Borrow the indices, positions, and the array of other attributes
     pub fn borrow(
@@ -104,34 +129,4 @@ where
 }
 
 //ip VerticesClient for Vertices
-impl<G> model3d_base::VerticesClient<G> for Vertices<G>
-where
-    G: Gl,
-{
-    //mp create
-    /// Create based on [model3d_rs::Vertices]
-    fn create(vertices: &model3d_base::Vertices<G>, _render_context: &mut G) -> Self {
-        let indices = vertices
-            .borrow_indices()
-            .borrow_client()
-            .as_index_buffer()
-            .clone()
-            .into();
-        let position = vertices
-            .borrow_position()
-            .borrow_client()
-            .as_vertex_buffer()
-            .clone()
-            .into();
-        let mut attrs = Vec::new();
-        for (attr, buffer) in vertices.iter_attrs() {
-            attrs.push((*attr, buffer.borrow_client().as_vertex_buffer().clone()));
-        }
-        let attrs = attrs.into();
-        Self {
-            indices,
-            position,
-            attrs,
-        }
-    }
-}
+impl<G> model3d_base::VerticesClient for Vertices<G> where G: Gl {}

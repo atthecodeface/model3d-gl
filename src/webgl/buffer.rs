@@ -63,17 +63,7 @@ impl std::fmt::Display for Buffer {
 }
 
 //ip BufferClient for Buffer
-impl BufferClient<Model3DWebGL> for Buffer {
-    /// Create a client
-    ///
-    /// This may be called multiple times for the same [BufferData]; if the
-    /// gl buffer is 0 then create, else it already exists with the same data
-    fn create(&mut self, data: &BufferData<Model3DWebGL>, render_context: &mut Model3DWebGL) {
-        if self.is_none() {
-            self.of_data(data, render_context)
-        }
-    }
-}
+impl BufferClient for Buffer {}
 
 //ip Buffer
 impl Buffer {
@@ -131,6 +121,9 @@ impl Buffer {
 
     //zz All done
 }
+
+//ip GlBuffer for Buffer
+impl crate::GlBuffer for Buffer {}
 
 //a Stuff that needs to be webgled
 // for vertex buffer

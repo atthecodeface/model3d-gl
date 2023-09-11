@@ -90,14 +90,25 @@ pub enum GlShaderType {
 /// A single GlBuffer will be cloned for different
 /// model3d_base::BufferView of the same BufferData (by the
 /// [VertexBuffer] type)
-pub trait GlBuffer<G>: Default + Clone + std::fmt::Debug + model3d_base::BufferClient<G> {}
+pub trait GlBuffer: Default + Clone + std::fmt::Debug + model3d_base::BufferClient {}
 
 //tt Gl
-pub trait Gl {
+/// This must provide Debug as Rust requires a type that is generic on
+/// a type of trait [Gl] to have that generic support Debug in order
+/// to derive Debug on the type.
+///
+/// The same is true of Clone, but that is too burdensome for Gl
+pub trait Gl:
+    model3d_base::Renderable<
+        Buffer = <Self as Gl>::Buffer,
+        Vertices = Vertices<Self>,
+        View = BufferView<Self>,
+    > + std::fmt::Debug
+{
     type Id: Sized;
     type Shader: GlShader;
     type Program: GlProgram;
-    type Buffer: GlBuffer<Self>;
+    type Buffer: GlBuffer;
 
     //fp link_program
     /// Create a program from a list of compiled shaders
@@ -114,6 +125,14 @@ pub trait Gl {
     //fp use_program
     /// Use the program
     fn use_program(&self, program: Option<&Self::Program>);
+
+    //mp init_buffer_of_indices
+    /// Create the OpenGL ELEMENT_ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
+    fn init_buffer_of_indices(
+        &mut self,
+        buffer: &mut <Self as Gl>::Buffer,
+        view: &model3d_base::BufferView<Self>,
+    );
 }
 
 //a Model3DWebGL
