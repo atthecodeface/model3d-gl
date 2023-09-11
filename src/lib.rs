@@ -83,11 +83,26 @@ pub enum GlShaderType {
     Fragment,
 }
 
+//tt GlBuffer
+/// The GlBuffer is something that is the Gl context's static draw
+/// copy of a [u8] that forms the values for vertices and indices etc.
+///
+/// A single GlBuffer will be cloned for different
+/// model3d_base::BufferView of the same BufferData (by the
+/// [VertexBuffer] type)
+pub trait GlBuffer<G: Gl + model3d_base::Renderable<Buffer = Self>>:
+    model3d_base::BufferClient<G> + Default + Clone + std::fmt::Debug
+{
+}
+
 //tt Gl
-pub trait Gl {
+pub trait Gl: model3d_base::Renderable {
     type Id: Sized;
     type Shader: GlShader;
-    type Program: GlProgram; //<Context = Self>;
+    type Program: GlProgram;
+    // type Buffer = <Self as model3d_base::Renderable>::Buffer
+    // type Buffer = model3d_base::Renderable::Buffer
+    // Self as  <Self GlBuffer + model3d_base::BufferClient<Self>;
 
     //fp link_program
     /// Create a program from a list of compiled shaders
@@ -110,17 +125,23 @@ pub trait Gl {
 mod webgl;
 pub use webgl::Model3DWebGL;
 
-// mod buffer;
+mod material;
+mod texture;
+pub use material::Material;
+pub use texture::Texture;
+
+mod buffer;
+pub use buffer::{BufferView, IndexBuffer, VertexBuffer};
+
+mod vertices;
+pub use vertices::Vertices;
+
 // mod gl_buffer;
-// mod material;
 // mod renderable;
 // mod shader_instantiable;
-// mod texture;
 // // mod traits;
 // // mod utils;
-// mod vertices;
 
-// pub use buffer::{BufferView, IndexBuffer, VertexBuffer};
 // pub use gl_buffer::GlBuffer;
 // pub use material::Material;
 // pub use renderable::{RenderContext, Renderable};
@@ -128,7 +149,6 @@ pub use webgl::Model3DWebGL;
 // pub use texture::Texture;
 // pub use traits::ShaderClass;
 // pub use utils::{check_errors, get_programiv, get_shader_error, get_shaderiv};
-// pub use vertices::Vertices;
 
 // mod program;
 // mod shader;

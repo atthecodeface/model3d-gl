@@ -1,19 +1,20 @@
+use crate::Gl;
+use crate::GlShaderType;
+use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlVertexArrayObject};
+
 mod shader;
 pub use shader::Shader;
 mod program;
 pub use program::Program;
 
+mod buffer;
+
 //a Model3DWebGL
 //tp Model3DWebGL
-use crate::GlShaderType;
-use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlVertexArrayObject};
-
-//tp Model3DWebGL
+#[derive(Debug)]
 pub struct Model3DWebGL {
     context: WebGl2RenderingContext,
 }
-
-use crate::Gl;
 
 //ip Model3DWebGL
 impl Model3DWebGL {
@@ -24,6 +25,8 @@ impl Model3DWebGL {
         &self.context
     }
 }
+
+//ip Deref for Model3DWebGL
 impl std::ops::Deref for Model3DWebGL {
     type Target = WebGl2RenderingContext;
     fn deref(&self) -> &WebGl2RenderingContext {
@@ -32,6 +35,15 @@ impl std::ops::Deref for Model3DWebGL {
 }
 
 //ip Gl for Model3DWebGL
+//ip model3d_base::Renderable for Model3DWebGL
+impl model3d_base::Renderable for Model3DWebGL {
+    type Context = Self;
+    type Buffer = buffer::Buffer;
+    type View = crate::BufferView<Self, buffer::Buffer>;
+    type Texture = crate::Texture;
+    type Material = crate::Material;
+    type Vertices = crate::Vertices<Self, buffer::Buffer>;
+}
 impl Gl for Model3DWebGL {
     type Id = u32;
     type Shader = Shader;
