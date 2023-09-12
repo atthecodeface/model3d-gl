@@ -1,4 +1,4 @@
-use crate::{Gl, GlProgram, GlShaderType, Mat4};
+use crate::{Gl, GlProgram, GlShaderType, Mat4, UniformBuffer};
 
 mod shader;
 pub mod utils;
@@ -31,7 +31,7 @@ impl Gl for Model3DOpenGL {
     type Buffer = buffer::Buffer;
     type Vao = vao::Vao;
 
-    //fp link_program
+    //mp link_program
     /// Create a program from a list of compiled shaders
     fn link_program(
         &self,
@@ -53,7 +53,7 @@ impl Gl for Model3DOpenGL {
         Ok(program)
     }
 
-    //fp compile_shader
+    //mp compile_shader
     /// Compile a shader
     fn compile_shader(
         &self,
@@ -63,7 +63,7 @@ impl Gl for Model3DOpenGL {
         Shader::compile(source, shader_type)
     }
 
-    //fp use_program
+    //mp use_program
     /// Use the program
     fn use_program(&self, program: Option<&Self::Program>) {
         if let Some(program) = program {
@@ -74,7 +74,7 @@ impl Gl for Model3DOpenGL {
             }
         }
     }
-    //fp init_buffer_of_indices
+    //mp init_buffer_of_indices
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
@@ -83,12 +83,12 @@ impl Gl for Model3DOpenGL {
         buffer.of_indices(view);
     }
 
-    //fp vao_create_from_indices
+    //mp vao_create_from_indices
     fn vao_create_from_indices(&mut self, indices: &crate::IndexBuffer<Self>) -> Result<Vao, ()> {
         Vao::create_from_indices(self, indices)
     }
 
-    //fp buffer_bind_to_vao_attr
+    //mp buffer_bind_to_vao_attr
     fn buffer_bind_to_vao_attr(
         &mut self,
         buffer: &<Self as Gl>::Buffer,
@@ -100,7 +100,7 @@ impl Gl for Model3DOpenGL {
     ) {
         buffer.bind_to_vao_attr(*attr_id, count, ele_type, byte_offset, stride);
     }
-    //fp program_set_uniform_mat4
+    //mp program_set_uniform_mat4
     fn program_set_uniform_mat4(&mut self, program: &Program, id: crate::UniformId, mat4: &Mat4) {
         if let Some(u) = program.uniform(id) {
             unsafe {
@@ -108,7 +108,24 @@ impl Gl for Model3DOpenGL {
             }
         }
     }
-    //fp draw_primitive
+    //mp program_bind_uniform_index
+    fn program_bind_uniform_index(
+        &mut self,
+        program: &<Self as Gl>::Program,
+        uniform_buffer_id: usize,
+        gl_uindex: u32,
+    ) -> Result<(), ()> {
+        if let Some(u) = program.uniform(crate::UniformId::Buffer(uniform_buffer_id)) {
+            unsafe {
+                println!("Bind to {}", u);
+                gl::UniformBlockBinding(program.id(), u as u32, gl_uindex);
+            }
+            utils::check_errors().expect("Bound uniform for material");
+        }
+        Ok(())
+    }
+
+    //mp draw_primitive
     fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
         // (if p.vertices_index different to last)
         vaos[primitive.vertices_index()].bind_vao();
@@ -131,7 +148,7 @@ impl Gl for Model3DOpenGL {
             );
         }
     }
-    //fp bind_vao
+    //mp bind_vao
     fn bind_vao(&mut self, vao: Option<&Self::Vao>) {
         if let Some(vao) = vao {
             vao.bind_vao();
@@ -139,6 +156,50 @@ impl Gl for Model3DOpenGL {
             unsafe {
                 gl::BindVertexArray(0);
             }
+        }
+    }
+
+    //mp uniform_buffer_create
+    fn uniform_buffer_create<F: Sized>(
+        &mut self,
+        data: &[F],
+        is_dynamic: bool,
+    ) -> Result<UniformBuffer<Self>, ()> {
+        let byte_length = std::mem::size_of_val(data);
+        let mut gl = buffer::Buffer::default();
+        gl.uniform_buffer(data, is_dynamic)?;
+        Ok(UniformBuffer::new(gl, byte_length))
+    }
+
+    //mp uniform_buffer_update_data
+    fn uniform_buffer_update_data<F: Sized>(
+        &mut self,
+        uniform_buffer: &UniformBuffer<Self>,
+        data: &[F],
+        byte_offset: u32,
+    ) {
+        uniform_buffer
+            .gl_buffer()
+            .uniform_update_data(data, byte_offset);
+    }
+
+    //mp uniform_index_of_range
+    fn uniform_index_of_range(
+        &mut self,
+        uniform_buffer: &UniformBuffer<Self>,
+        gl_uindex: u32,
+        byte_offset: usize,
+        byte_length: usize,
+    ) {
+        let (byte_offset, byte_length) = uniform_buffer.offset_and_length(byte_offset, byte_length);
+        unsafe {
+            gl::BindBufferRange(
+                gl::UNIFORM_BUFFER,
+                gl_uindex,
+                uniform_buffer.gl_buffer().gl_buffer(),
+                byte_offset as isize,
+                byte_length as isize,
+            );
         }
     }
 }

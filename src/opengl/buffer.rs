@@ -125,29 +125,6 @@ impl Buffer {
         self.gl = Rc::new(gl);
     }
 
-    //mp uniform_buffer
-    /// Create the OpenGL
-    pub fn uniform_buffer<F: Sized>(&mut self, data: &[F]) {
-        assert!(self.is_none());
-        let buffer = data.as_ptr();
-        let byte_length = std::mem::size_of::<F>() * data.len();
-        let mut gl: gl::types::GLuint = 0;
-        unsafe {
-            gl::BindVertexArray(0);
-            gl::GenBuffers(1, (&mut gl) as *mut gl::types::GLuint);
-            gl::BindBuffer(gl::UNIFORM_BUFFER, gl);
-            gl::BufferData(
-                gl::UNIFORM_BUFFER,
-                byte_length as gl::types::GLsizeiptr,
-                buffer as *const gl::types::GLvoid,
-                gl::STATIC_DRAW,
-            );
-            gl::BindBuffer(gl::UNIFORM_BUFFER, 0); // unbind to protect
-            println!("Uniform buffer {} bound @{:?}+{}", gl, buffer, byte_length);
-        }
-        self.gl = Rc::new(gl);
-    }
-
     //fp bind_to_vao_attr
     /// Bind the buffer as a vertex attribute to the current VAO
     pub fn bind_to_vao_attr(
@@ -178,6 +155,44 @@ impl Buffer {
                 gl::FALSE,     // normalized
                 stride as i32, // stride
                 std::mem::transmute::<usize, *const std::os::raw::c_void>(byte_offset as usize), // ptr
+            );
+        }
+    }
+
+    //mp uniform_buffer
+    /// Create the OpenGL
+    pub fn uniform_buffer<F: Sized>(&mut self, data: &[F], is_dynamic: bool) -> Result<(), ()> {
+        assert!(self.is_none());
+        let buffer = data.as_ptr();
+        let byte_length = std::mem::size_of::<F>() * data.len();
+        let mut gl: gl::types::GLuint = 0;
+        unsafe {
+            gl::BindVertexArray(0);
+            gl::GenBuffers(1, (&mut gl) as *mut gl::types::GLuint);
+            gl::BindBuffer(gl::UNIFORM_BUFFER, gl);
+            gl::BufferData(
+                gl::UNIFORM_BUFFER,
+                byte_length as gl::types::GLsizeiptr,
+                buffer as *const gl::types::GLvoid,
+                gl::STATIC_DRAW,
+            );
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0); // unbind to protect
+        }
+        self.gl = Rc::new(gl);
+        Ok(())
+    }
+
+    //fp uniform_update_data
+    pub fn uniform_update_data<F: Sized>(&self, data: &[F], byte_offset: u32) {
+        let buffer = data.as_ptr();
+        let byte_length = std::mem::size_of_val(data);
+        unsafe {
+            gl::BindBuffer(gl::UNIFORM_BUFFER, self.gl_buffer());
+            gl::BufferSubData(
+                gl::UNIFORM_BUFFER,
+                byte_offset as isize,
+                byte_length as isize,
+                buffer as *const std::os::raw::c_void,
             );
         }
     }

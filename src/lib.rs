@@ -145,6 +145,39 @@ pub trait Gl:
         buffer: &mut <Self as Gl>::Buffer,
         view: &model3d_base::BufferView<Self>,
     );
+    //mp uniform_buffer_create
+    /// Create a uniform buffer (a GlBuffer in the GPU bound to GlUniformBuffer)
+    ///
+    /// Fill the data; if is_dynamic is true then make it dynamic draw
+    fn uniform_buffer_create<F: Sized>(
+        &mut self,
+        _data: &[F],
+        _is_dynamic: bool,
+    ) -> Result<UniformBuffer<Self>, ()> {
+        Err(())
+    }
+
+    //mp uniform_buffer_update_data
+    /// Update (a portion) of a uniform GlBuffer
+    fn uniform_buffer_update_data<F: Sized>(
+        &mut self,
+        _uniform_buffer: &UniformBuffer<Self>,
+        _data: &[F],
+        _byte_offset: u32,
+    ) {
+    }
+
+    //mp uniform_index_of_range
+    /// Set the GPU's UniformBlockMatrix index N to a range of a UniformBuffer
+    fn uniform_index_of_range(
+        &mut self,
+        _uniform_buffer: &UniformBuffer<Self>,
+        _gl_uindex: u32,
+        _byte_offset: usize,
+        _byte_length: usize,
+    ) {
+    }
+
     //fp vao_create_from_indices
     fn vao_create_from_indices(
         &mut self,
@@ -174,6 +207,16 @@ pub trait Gl:
     ) {
     }
 
+    //mp program_bind_uniform_index
+    fn program_bind_uniform_index(
+        &mut self,
+        program: &<Self as Gl>::Program,
+        uniform_buffer_id: usize,
+        gl_uindex: u32,
+    ) -> Result<(), ()> {
+        Err(())
+    }
+
     //fp draw_primitive
     fn draw_primitive(&mut self, vaos: &[Self::Vao], primitive: &model3d_base::Primitive) {}
     //fp bind_vao
@@ -187,7 +230,7 @@ pub use material::Material;
 pub use texture::Texture;
 
 mod buffer;
-pub use buffer::{BufferView, IndexBuffer, VertexBuffer};
+pub use buffer::{BufferView, IndexBuffer, UniformBuffer, VertexBuffer};
 
 mod vertices;
 pub use vertices::Vertices;

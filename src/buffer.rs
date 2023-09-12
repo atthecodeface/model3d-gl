@@ -17,6 +17,8 @@ limitations under the License.
  */
 
 //a Imports
+use std::marker::PhantomData;
+
 use model3d_base::{BufferElementType, VertexAttr};
 
 use crate::{Gl, GlProgram};
@@ -354,3 +356,61 @@ where
 
 //ip DefaultIndentedDisplay for BufferView
 impl<G> indent_display::DefaultIndentedDisplay for BufferView<G> where G: Gl {}
+
+//a UniformBuffer
+//tp UniformBuffer
+/// Creates a UniformBuffer that may contain the data for a number of program Uniforms
+///
+/// For simplicity in OpenGl/WebGl this also creates the backing GlBuffer
+///
+/// A program's uniform is bound to a *range* of one of these
+#[derive(Debug)]
+pub struct UniformBuffer<G>
+where
+    G: Gl,
+{
+    /// Ref-cotunted GPU gl buffer to use
+    gl_buffer: <G as Gl>::Buffer,
+    /// This is the size of the buffer (so that length=0 can map to the whole buffer)
+    byte_length: usize,
+    phantom: PhantomData<G>,
+}
+
+//ip UniformBuffer
+impl<G> UniformBuffer<G>
+where
+    G: Gl,
+{
+    //fp of_data
+    pub fn of_data<F: Sized>(context: &mut G, data: &[F], is_dynamic: bool) -> Result<Self, ()> {
+        G::uniform_buffer_create(context, data, is_dynamic)
+    }
+
+    //fp new
+    pub fn new(gl_buffer: <G as Gl>::Buffer, byte_length: usize) -> Self {
+        Self {
+            gl_buffer,
+            byte_length,
+            phantom: PhantomData,
+        }
+    }
+    //ap gl_buffer
+    /// Get the gl_buffer associated with the data, assuming its
+    /// `gl_create` method has been invoked at least once
+    pub fn gl_buffer(&self) -> &<G as Gl>::Buffer {
+        &self.gl_buffer
+    }
+
+    //ap byte_length
+    pub fn byte_length(&self) -> usize {
+        self.byte_length
+    }
+    //ap offset_and_length
+    pub fn offset_and_length(&self, byte_offset: usize, byte_length: usize) -> (usize, usize) {
+        if byte_length == 0 {
+            (0, self.byte_length)
+        } else {
+            (byte_offset, byte_length)
+        }
+    }
+}
