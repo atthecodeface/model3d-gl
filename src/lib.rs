@@ -92,6 +92,10 @@ pub enum GlShaderType {
 /// [VertexBuffer] type)
 pub trait GlBuffer: Default + Clone + std::fmt::Debug + model3d_base::BufferClient {}
 
+//tt GlVao
+/// The GlVao correlates to an OpenGl VAO buffer for a ShaderInstantiable mesh + GlProgram
+pub trait GlVao: Sized {}
+
 //tt Gl
 /// This must provide Debug as Rust requires a type that is generic on
 /// a type of trait [Gl] to have that generic support Debug in order
@@ -105,14 +109,22 @@ pub trait Gl:
         View = BufferView<Self>,
     > + std::fmt::Debug
 {
+    // Lose Id?
     type Id: Sized;
     type Shader: GlShader;
     type Program: GlProgram;
     type Buffer: GlBuffer;
+    type Vao: GlVao;
 
     //fp link_program
     /// Create a program from a list of compiled shaders
-    fn link_program(&self, srcs: &[&Self::Shader]) -> Result<Self::Program, String>;
+    fn link_program(
+        &self,
+        srcs: &[&Self::Shader],
+        named_attrs: &[(&str, model3d_base::VertexAttr)],
+        named_uniforms: &[(&str, UniformId)],
+        named_uniform_buffers: &[(&str, usize)],
+    ) -> Result<Self::Program, String>;
 
     //fp compile_shader
     /// Compile a shader
@@ -133,12 +145,42 @@ pub trait Gl:
         buffer: &mut <Self as Gl>::Buffer,
         view: &model3d_base::BufferView<Self>,
     );
+    //fp vao_create_from_indices
+    fn vao_create_from_indices(
+        &mut self,
+        indices: &crate::IndexBuffer<Self>,
+    ) -> Result<Self::Vao, ()> {
+        Err(())
+    }
+
+    //fp buffer_bind_to_vao_attr
+    fn buffer_bind_to_vao_attr(
+        &mut self,
+        buffer: &<Self as Gl>::Buffer,
+        attr_id: &<<Self as Gl>::Program as GlProgram>::GlAttrId,
+        count: u32,
+        ele_type: model3d_base::BufferElementType,
+        byte_offset: u32,
+        stride: u32,
+    ) {
+    }
+
+    //fp program_set_uniform_mat4
+    fn program_set_uniform_mat4(
+        &mut self,
+        program: &Self::Program,
+        id: crate::UniformId,
+        mat4: &Mat4,
+    ) {
+    }
+
+    //fp draw_primitive
+    fn draw_primitive(&mut self, vaos: &[Self::Vao], primitive: &model3d_base::Primitive) {}
+    //fp bind_vao
+    fn bind_vao(&mut self, vao: Option<&Self::Vao>) {}
 }
 
-//a Model3DWebGL
-mod webgl;
-pub use webgl::Model3DWebGL;
-
+//a Submodules
 mod material;
 mod texture;
 pub use material::Material;
@@ -150,22 +192,29 @@ pub use buffer::{BufferView, IndexBuffer, VertexBuffer};
 mod vertices;
 pub use vertices::Vertices;
 
-// mod gl_buffer;
-// mod renderable;
-// mod shader_instantiable;
-// // mod traits;
-// // mod utils;
-
-// pub use gl_buffer::GlBuffer;
-// pub use material::Material;
-// pub use renderable::{RenderContext, Renderable};
-// pub use shader_instantiable::ShaderInstantiable;
-// pub use texture::Texture;
-// pub use traits::ShaderClass;
-// pub use utils::{check_errors, get_programiv, get_shader_error, get_shaderiv};
+mod shader_instantiable;
+pub use shader_instantiable::ShaderInstantiable;
 
 // mod program;
 // mod shader;
 // pub use program::Program as GlProgram;
 // pub use program::UniformId;
 // pub use shader::GlShader;
+
+// mod renderable;
+// mod shader_instantiable;
+
+//a Model3DWebGL
+mod webgl;
+pub use webgl::Model3DWebGL;
+
+//a Model3DOpenGL
+mod opengl;
+pub use opengl::utils as opengl_utils;
+pub use opengl::Model3DOpenGL;
+
+// pub use renderable::{RenderContext, Renderable};
+// pub use shader_instantiable::ShaderInstantiable;
+// pub use texture::Texture;
+// pub use traits::ShaderClass;
+// pub use utils::{check_errors, get_programiv, get_shader_error, get_shaderiv};

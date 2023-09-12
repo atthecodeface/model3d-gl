@@ -5,8 +5,7 @@ edition = "2021"
 
 [dependencies]
 geo-nd   = "0.1.0"
-# gl       = "0.10.0"
-# indent-display = "0.1.0"
+gl = "0.10.0"
 indent-display = "0.1.1"
 model3d-base = { path="../model3d-rs" }
 

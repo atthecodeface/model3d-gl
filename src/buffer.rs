@@ -17,9 +17,9 @@ limitations under the License.
  */
 
 //a Imports
-use model3d_base::{BufferElementType, VertexAttr, ViewClient};
+use model3d_base::{BufferElementType, VertexAttr};
 
-use crate::{Gl, GlBuffer};
+use crate::{Gl, GlProgram};
 
 //a VertexBuffer
 //tp VertexBuffer
@@ -70,6 +70,23 @@ where
         self.byte_offset = view.byte_offset;
         self.stride = view.stride;
         self.gl_buffer = view.data.borrow_client().clone();
+    }
+
+    //fp bind_to_vao_attr
+    /// Bind the buffer as a vertex attribute to the current VAO
+    pub fn bind_to_vao_attr(
+        &self,
+        context: &mut G,
+        attr_id: &<<G as Gl>::Program as GlProgram>::GlAttrId,
+    ) {
+        context.buffer_bind_to_vao_attr(
+            &self.gl_buffer,
+            attr_id,
+            self.count,
+            self.ele_type,
+            self.byte_offset,
+            self.stride,
+        );
     }
 
     //zz All done
@@ -209,6 +226,10 @@ where
             count,
             ele_type,
         }
+    }
+    //ap gl_buffer
+    pub fn gl_buffer(&self) -> &<G as Gl>::Buffer {
+        &self.gl_buffer
     }
 
     //zz All done

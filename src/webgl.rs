@@ -1,6 +1,6 @@
 use crate::Gl;
 use crate::GlShaderType;
-use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlVertexArrayObject};
+use web_sys::WebGl2RenderingContext;
 
 mod shader;
 pub use shader::Shader;
@@ -8,6 +8,8 @@ mod program;
 pub use program::Program;
 
 mod buffer;
+
+mod vao;
 
 //a Model3DWebGL
 //tp Model3DWebGL
@@ -40,11 +42,28 @@ impl Gl for Model3DWebGL {
     type Shader = Shader;
     type Program = Program;
     type Buffer = buffer::Buffer;
+    type Vao = vao::Vao;
 
     //fp link_program
     /// Create a program from a list of compiled shaders
-    fn link_program(&self, srcs: &[&Shader]) -> Result<Program, String> {
-        Program::link_program(&self.context, srcs)
+    fn link_program(
+        &self,
+        srcs: &[&Self::Shader],
+        named_attrs: &[(&str, model3d_base::VertexAttr)],
+        named_uniforms: &[(&str, crate::UniformId)],
+        _named_uniform_buffers: &[(&str, usize)],
+    ) -> Result<Self::Program, String> {
+        let mut program = Program::link_program(&self.context, srcs)?;
+        for (name, attr) in named_attrs {
+            program.add_attr_name(self, name, *attr)?;
+        }
+        for (name, uniform) in named_uniforms {
+            program.add_uniform_name(self, name, *uniform)?;
+        }
+        // for (name, uniform) in named_uniform_buffers {
+        // program.add_uniform_buffer_name(*name, *uniform)?;
+        // }
+        Ok(program)
     }
 
     //fp compile_shader
@@ -115,8 +134,8 @@ impl model3d_base::Renderable for Model3DWebGL {
 
     fn init_material_client(
         &mut self,
-        client: &mut Self::Material,
-        material: &dyn model3d_base::Material<Self>,
+        _client: &mut Self::Material,
+        _material: &dyn model3d_base::Material<Self>,
     ) {
     }
     //zz All done

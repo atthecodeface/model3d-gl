@@ -45,7 +45,7 @@ pub struct Program {
 
 ///ip Program
 impl Program {
-    //fp compile_program
+    //fp link_program
     /// Compile a program from a slice of kind/source pairs
     pub fn link_program(
         context: &WebGl2RenderingContext,

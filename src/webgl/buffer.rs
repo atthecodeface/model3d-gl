@@ -1,26 +1,8 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    gl_buffer.rs
-@brief   An OpenGL Buffer representation
- */
-
 //a Imports
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use model3d_base::{BufferClient, BufferData, BufferElementType};
+use model3d_base::{BufferClient, BufferData};
 
 use super::Model3DWebGL;
 use web_sys::{WebGl2RenderingContext, WebGlBuffer};
@@ -95,16 +77,16 @@ impl Buffer {
         render_context: &Model3DWebGL,
     ) {
         assert!(self.is_none());
-        let ele_size = {
-            use BufferElementType::*;
-            match view.ele_type {
-                Int8 => 1,
-                Int16 => 2,
-                Int32 => 4,
-                _ => panic!("Indices BufferView must have an int element type"),
-            }
-        };
-        let byte_length = ele_size * view.count;
+        // let ele_size = {
+        //     use BufferElementType::*;
+        //     match view.ele_type {
+        //         Int8 => 1,
+        //         Int16 => 2,
+        //         Int32 => 4,
+        //         _ => panic!("Indices BufferView must have an int element type"),
+        //     }
+        // };
+        // let byte_length = ele_size * view.count;
         // stops the indices messing up other VAO
         render_context.bind_vertex_array(None);
         let data = view.data.as_slice();
