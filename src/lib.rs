@@ -246,18 +246,17 @@ pub use shader_instantiable::ShaderInstantiable;
 // mod shader_instantiable;
 
 //a Model3DWebGL
+#[cfg(feature = "webgl")]
 mod webgl;
+#[cfg(feature = "webgl")]
 mod webgl_log;
-
+#[cfg(feature = "webgl")]
 pub use webgl::Model3DWebGL;
 
 //a Model3DOpenGL
+#[cfg(feature = "opengl")]
 mod opengl;
+#[cfg(feature = "opengl")]
 pub use opengl::utils as opengl_utils;
+#[cfg(feature = "opengl")]
 pub use opengl::Model3DOpenGL;
-
-// pub use renderable::{RenderContext, Renderable};
-// pub use shader_instantiable::ShaderInstantiable;
-// pub use texture::Texture;
-// pub use traits::ShaderClass;
-// pub use utils::{check_errors, get_programiv, get_shader_error, get_shaderiv};

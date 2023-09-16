@@ -3,15 +3,31 @@ name = "model3d-gl"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["webgl", "opengl"]
+webgl = ["dep:wasm-bindgen", "dep:js-sys", "dep:web-sys"]
+opengl = ["dep:gl"]
+
 [dependencies]
 geo-nd   = "0.1.0"
-gl = "0.10.0"
-js-sys = ">=0.3.64"
 indent-display = "0.1.1"
-model3d-base = { path="../model3d-rs" }
-wasm-bindgen = ">=0.2.74"
+model3d-base = { path="../model3d-base" }
+
+[dependencies.gl]
+optional = true
+version = ">=0.10.0"
+
+[dependencies.wasm-bindgen]
+optional = true
+version = ">=0.2.74"
+
+[dependencies.js-sys]
+optional = true
+version = ">=0.3.64"
 
 [dependencies.web-sys]
+optional = true
+version = ">=0.3.40"
 features = [
   'console',
   'CanvasRenderingContext2d',
@@ -29,5 +45,4 @@ features = [
   'WebGlUniformLocation',
   'Window',
 ]
-version = ">=0.3.40"
 
