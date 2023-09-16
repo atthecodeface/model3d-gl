@@ -394,6 +394,7 @@ where
             phantom: PhantomData,
         }
     }
+
     //ap gl_buffer
     /// Get the gl_buffer associated with the data, assuming its
     /// `gl_create` method has been invoked at least once
@@ -405,6 +406,7 @@ where
     pub fn byte_length(&self) -> usize {
         self.byte_length
     }
+
     //ap offset_and_length
     pub fn offset_and_length(&self, byte_offset: usize, byte_length: usize) -> (usize, usize) {
         if byte_length == 0 {

@@ -48,7 +48,7 @@ impl Gl for Model3DOpenGL {
             program.add_uniform_name(name, *uniform)?;
         }
         for (name, uniform) in named_uniform_buffers {
-            program.add_uniform_buffer_name(*name, *uniform)?;
+            program.add_uniform_buffer_name(name, *uniform)?;
         }
         Ok(program)
     }
@@ -172,7 +172,7 @@ impl Gl for Model3DOpenGL {
     }
 
     //mp uniform_buffer_update_data
-    fn uniform_buffer_update_data<F: Sized>(
+    fn uniform_buffer_update_data<F: std::fmt::Debug>(
         &mut self,
         uniform_buffer: &UniformBuffer<Self>,
         data: &[F],
@@ -212,6 +212,7 @@ impl model3d_base::Renderable for Model3DOpenGL {
     type Material = crate::Material;
     type Vertices = crate::Vertices<Self>;
 
+    //mp init_buffer_data_client
     /// Initialize a BufferData client
     ///
     /// This may be called multiple times for the same [BufferData]; if the
@@ -226,6 +227,7 @@ impl model3d_base::Renderable for Model3DOpenGL {
         }
     }
 
+    //mp init_buffer_view_client
     /// Initialize a buffer view client
     fn init_buffer_view_client(
         &mut self,
@@ -235,6 +237,8 @@ impl model3d_base::Renderable for Model3DOpenGL {
     ) {
         client.init_buffer_view_client(buffer_view, attr, self);
     }
+
+    //mp create_vertices_client
     fn create_vertices_client(
         &mut self,
         vertices: &model3d_base::Vertices<Self>,
@@ -242,11 +246,13 @@ impl model3d_base::Renderable for Model3DOpenGL {
         Self::Vertices::create(vertices, self)
     }
 
+    //mp init_material_client
     fn init_material_client(
         &mut self,
         _client: &mut Self::Material,
         _material: &dyn model3d_base::Material<Self>,
     ) {
     }
+
     //zz All done
 }

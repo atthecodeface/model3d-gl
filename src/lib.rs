@@ -145,6 +145,7 @@ pub trait Gl:
         buffer: &mut <Self as Gl>::Buffer,
         view: &model3d_base::BufferView<Self>,
     );
+
     //mp uniform_buffer_create
     /// Create a uniform buffer (a GlBuffer in the GPU bound to GlUniformBuffer)
     ///
@@ -153,19 +154,16 @@ pub trait Gl:
         &mut self,
         _data: &[F],
         _is_dynamic: bool,
-    ) -> Result<UniformBuffer<Self>, ()> {
-        Err(())
-    }
+    ) -> Result<UniformBuffer<Self>, ()>;
 
     //mp uniform_buffer_update_data
     /// Update (a portion) of a uniform GlBuffer
-    fn uniform_buffer_update_data<F: Sized>(
+    fn uniform_buffer_update_data<F: std::fmt::Debug>(
         &mut self,
         _uniform_buffer: &UniformBuffer<Self>,
         _data: &[F],
         _byte_offset: u32,
-    ) {
-    }
+    );
 
     //mp uniform_index_of_range
     /// Set the GPU's UniformBlockMatrix index N to a range of a UniformBuffer
@@ -175,18 +173,20 @@ pub trait Gl:
         _gl_uindex: u32,
         _byte_offset: usize,
         _byte_length: usize,
-    ) {
-    }
+    );
 
     //fp vao_create_from_indices
+    /// Create a VAO, add the indices as its element array buffer, and
+    /// leave it bound
     fn vao_create_from_indices(
         &mut self,
         indices: &crate::IndexBuffer<Self>,
-    ) -> Result<Self::Vao, ()> {
-        Err(())
-    }
+    ) -> Result<Self::Vao, ()>;
 
     //fp buffer_bind_to_vao_attr
+    /// With the currently bound VAO add this view of the specified
+    /// buffer as an attribute of the program, if the program has that
+    /// attribute
     fn buffer_bind_to_vao_attr(
         &mut self,
         buffer: &<Self as Gl>::Buffer,
@@ -195,8 +195,7 @@ pub trait Gl:
         ele_type: model3d_base::BufferElementType,
         byte_offset: u32,
         stride: u32,
-    ) {
-    }
+    );
 
     //fp program_set_uniform_mat4
     fn program_set_uniform_mat4(
@@ -204,8 +203,7 @@ pub trait Gl:
         program: &Self::Program,
         id: crate::UniformId,
         mat4: &Mat4,
-    ) {
-    }
+    );
 
     //mp program_bind_uniform_index
     fn program_bind_uniform_index(
@@ -213,14 +211,14 @@ pub trait Gl:
         program: &<Self as Gl>::Program,
         uniform_buffer_id: usize,
         gl_uindex: u32,
-    ) -> Result<(), ()> {
-        Err(())
-    }
+    ) -> Result<(), ()>;
 
     //fp draw_primitive
-    fn draw_primitive(&mut self, vaos: &[Self::Vao], primitive: &model3d_base::Primitive) {}
+    /// Draw the specified primitive using its VAO index into the vaos slice
+    fn draw_primitive(&mut self, vaos: &[Self::Vao], primitive: &model3d_base::Primitive);
+
     //fp bind_vao
-    fn bind_vao(&mut self, vao: Option<&Self::Vao>) {}
+    fn bind_vao(&mut self, vao: Option<&Self::Vao>);
 }
 
 //a Submodules
@@ -249,6 +247,8 @@ pub use shader_instantiable::ShaderInstantiable;
 
 //a Model3DWebGL
 mod webgl;
+mod webgl_log;
+
 pub use webgl::Model3DWebGL;
 
 //a Model3DOpenGL

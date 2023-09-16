@@ -1,6 +1,7 @@
-use crate::Gl;
-use crate::GlShaderType;
-use web_sys::WebGl2RenderingContext;
+use crate::console_log;
+use crate::webgl_log::log_gl_vao;
+use crate::{Gl, GlProgram, GlShaderType, Mat4, UniformBuffer};
+use web_sys::{WebGl2RenderingContext, WebGlBuffer};
 
 mod shader;
 pub use shader::Shader;
@@ -10,6 +11,7 @@ pub use program::Program;
 mod buffer;
 
 mod vao;
+use vao::Vao;
 
 //a Model3DWebGL
 //tp Model3DWebGL
@@ -51,7 +53,7 @@ impl Gl for Model3DWebGL {
         srcs: &[&Self::Shader],
         named_attrs: &[(&str, model3d_base::VertexAttr)],
         named_uniforms: &[(&str, crate::UniformId)],
-        _named_uniform_buffers: &[(&str, usize)],
+        named_uniform_buffers: &[(&str, usize)],
     ) -> Result<Self::Program, String> {
         let mut program = Program::link_program(&self.context, srcs)?;
         for (name, attr) in named_attrs {
@@ -60,9 +62,9 @@ impl Gl for Model3DWebGL {
         for (name, uniform) in named_uniforms {
             program.add_uniform_name(self, name, *uniform)?;
         }
-        // for (name, uniform) in named_uniform_buffers {
-        // program.add_uniform_buffer_name(*name, *uniform)?;
-        // }
+        for (name, uniform) in named_uniform_buffers {
+            program.add_uniform_buffer_name(self, name, *uniform)?;
+        }
         Ok(program)
     }
 
@@ -85,12 +87,131 @@ impl Gl for Model3DWebGL {
             self.context.use_program(None);
         }
     }
+
+    //mp init_buffer_of_indices
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
         view: &model3d_base::BufferView<Self>,
     ) {
         buffer.of_indices(view, self);
+    }
+
+    //mp vao_create_from_indices
+    fn vao_create_from_indices(&mut self, indices: &crate::IndexBuffer<Self>) -> Result<Vao, ()> {
+        Vao::create_from_indices(self, indices)
+    }
+
+    //mp buffer_bind_to_vao_attr
+    fn buffer_bind_to_vao_attr(
+        &mut self,
+        buffer: &<Self as Gl>::Buffer,
+        attr_id: &<Program as GlProgram>::GlAttrId,
+        count: u32,
+        ele_type: model3d_base::BufferElementType,
+        byte_offset: u32,
+        stride: u32,
+    ) {
+        buffer.bind_to_vao_attr(self, *attr_id, count, ele_type, byte_offset, stride);
+    }
+
+    //mp program_set_uniform_mat4
+    fn program_set_uniform_mat4(&mut self, program: &Program, id: crate::UniformId, mat4: &Mat4) {
+        console_log!("program_set_uniform_mat4: {:?} {:?}", id, mat4);
+        if let Some(u) = program.uniform(id) {
+            self.context
+                .uniform_matrix4fv_with_f32_array(Some(u), false, mat4);
+        }
+    }
+
+    //mp program_bind_uniform_index
+    fn program_bind_uniform_index(
+        &mut self,
+        program: &<Self as Gl>::Program,
+        uniform_buffer_id: usize,
+        gl_uindex: u32,
+    ) -> Result<(), ()> {
+        if let Some(u) = program.uniform_buffer(uniform_buffer_id) {
+            self.context
+                .uniform_block_binding(program.program(), u, gl_uindex);
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    //mp draw_primitive
+    fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
+        console_log!("draw_primitive {primitive:?}");
+        vaos[primitive.vertices_index()].bind_vao(self);
+        use model3d_base::PrimitiveType::*;
+        let gl_type = match primitive.primitive_type() {
+            Points => WebGl2RenderingContext::POINTS,
+            Lines => WebGl2RenderingContext::LINES,
+            LineLoop => WebGl2RenderingContext::LINE_LOOP,
+            LineStrip => WebGl2RenderingContext::LINE_STRIP,
+            Triangles => WebGl2RenderingContext::TRIANGLES,
+            TriangleFan => WebGl2RenderingContext::TRIANGLE_FAN,
+            TriangleStrip => WebGl2RenderingContext::TRIANGLE_STRIP,
+        };
+        self.draw_elements_with_i32(
+            gl_type,
+            primitive.index_count() as i32,
+            WebGl2RenderingContext::UNSIGNED_BYTE,
+            primitive.byte_offset() as i32,
+        );
+    }
+
+    //mp bind_vao
+    fn bind_vao(&mut self, vao: Option<&Self::Vao>) {
+        if let Some(vao) = vao {
+            vao.bind_vao(self);
+        } else {
+            self.bind_vertex_array(None);
+            log_gl_vao(self, None, "bind_vao");
+        }
+    }
+
+    //mp uniform_buffer_create
+    fn uniform_buffer_create<F: Sized>(
+        &mut self,
+        data: &[F],
+        is_dynamic: bool,
+    ) -> Result<UniformBuffer<Self>, ()> {
+        let byte_length = std::mem::size_of_val(data);
+        let mut gl = buffer::Buffer::default();
+        gl.uniform_buffer(self, data, is_dynamic)?;
+        Ok(UniformBuffer::new(gl, byte_length))
+    }
+
+    //mp uniform_buffer_update_data
+    fn uniform_buffer_update_data<F: std::fmt::Debug>(
+        &mut self,
+        uniform_buffer: &UniformBuffer<Self>,
+        data: &[F],
+        byte_offset: u32,
+    ) {
+        uniform_buffer
+            .gl_buffer()
+            .uniform_update_data(self, data, byte_offset);
+    }
+
+    //mp uniform_index_of_range
+    fn uniform_index_of_range(
+        &mut self,
+        uniform_buffer: &UniformBuffer<Self>,
+        gl_uindex: u32,
+        byte_offset: usize,
+        byte_length: usize,
+    ) {
+        let (byte_offset, byte_length) = uniform_buffer.offset_and_length(byte_offset, byte_length);
+        uniform_buffer.gl_buffer().bind_buffer_range(
+            self,
+            WebGl2RenderingContext::UNIFORM_BUFFER,
+            gl_uindex,
+            byte_offset as i32,
+            byte_length as i32,
+        );
     }
 }
 
@@ -102,6 +223,7 @@ impl model3d_base::Renderable for Model3DWebGL {
     type Material = crate::Material;
     type Vertices = crate::Vertices<Self>;
 
+    //mp init_buffer_data_client
     /// Initialize a BufferData client
     ///
     /// This may be called multiple times for the same [BufferData]; if the
@@ -116,6 +238,7 @@ impl model3d_base::Renderable for Model3DWebGL {
         }
     }
 
+    //mp init_buffer_view_client
     /// Initialize a buffer view client
     fn init_buffer_view_client(
         &mut self,
@@ -125,6 +248,8 @@ impl model3d_base::Renderable for Model3DWebGL {
     ) {
         client.init_buffer_view_client(buffer_view, attr, self);
     }
+
+    //mp create_vertices_client
     fn create_vertices_client(
         &mut self,
         vertices: &model3d_base::Vertices<Self>,
@@ -132,11 +257,13 @@ impl model3d_base::Renderable for Model3DWebGL {
         Self::Vertices::create(vertices, self)
     }
 
+    //mp init_material_client
     fn init_material_client(
         &mut self,
         _client: &mut Self::Material,
         _material: &dyn model3d_base::Material<Self>,
     ) {
     }
+
     //zz All done
 }

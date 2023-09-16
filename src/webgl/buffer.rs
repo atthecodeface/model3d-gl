@@ -4,7 +4,10 @@ use std::rc::Rc;
 
 use model3d_base::{BufferClient, BufferData};
 
-use super::Model3DWebGL;
+use crate::webgl_log::log_gl_buffer;
+
+use super::{Model3DWebGL, Program};
+use crate::GlProgram;
 use web_sys::{WebGl2RenderingContext, WebGlBuffer};
 
 //a Buffer
@@ -60,13 +63,30 @@ impl Buffer {
         assert!(self.is_none());
         let gl = render_context.create_buffer().unwrap();
         render_context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, Some(&gl));
-        render_context.buffer_data_with_u8_array(
-            WebGl2RenderingContext::ARRAY_BUFFER,
-            data.as_slice(),
-            WebGl2RenderingContext::STATIC_DRAW,
-        );
+        // render_context.buffer_data_with_u8_array(
+        //    WebGl2RenderingContext::ARRAY_BUFFER,
+        //    data.as_slice(),
+        //    WebGl2RenderingContext::STATIC_DRAW,
+        // );
+        unsafe {
+            let buf_view = js_sys::Uint8Array::view(data.as_slice());
+            render_context.buffer_data_with_array_buffer_view(
+                WebGl2RenderingContext::ARRAY_BUFFER,
+                &buf_view,
+                WebGl2RenderingContext::STATIC_DRAW,
+            );
+        }
         render_context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, None);
         *self.gl.borrow_mut() = Some(gl);
+        log_gl_buffer(
+            render_context,
+            self.gl.borrow().as_ref(),
+            // &format!("Buffer:of_data {} {:?}", self, data.as_slice()),
+            &format!("Buffer:of_data {self}"),
+            WebGl2RenderingContext::ARRAY_BUFFER,
+            0,
+            0, // data.as_slice().len(),
+        );
     }
 
     //mp of_indices
@@ -77,28 +97,185 @@ impl Buffer {
         render_context: &Model3DWebGL,
     ) {
         assert!(self.is_none());
-        // let ele_size = {
-        //     use BufferElementType::*;
-        //     match view.ele_type {
-        //         Int8 => 1,
-        //         Int16 => 2,
-        //         Int32 => 4,
-        //         _ => panic!("Indices BufferView must have an int element type"),
-        //     }
-        // };
-        // let byte_length = ele_size * view.count;
-        // stops the indices messing up other VAO
         render_context.bind_vertex_array(None);
         let data = view.data.as_slice();
+        assert!(view.byte_offset == 0, "Have not got subranging");
         let gl = render_context.create_buffer().unwrap();
         render_context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&gl));
-        render_context.buffer_data_with_u8_array(
-            WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
-            data,
-            WebGl2RenderingContext::STATIC_DRAW,
-        );
+        // render_context.buffer_data_with_u8_array(
+        //    WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
+        //    data,
+        //    WebGl2RenderingContext::STATIC_DRAW,
+        // );
+        unsafe {
+            let buf_view = js_sys::Uint8Array::view(data);
+            render_context.buffer_data_with_array_buffer_view(
+                WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
+                &buf_view,
+                WebGl2RenderingContext::STATIC_DRAW,
+            );
+        }
         render_context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, None);
         *self.gl.borrow_mut() = Some(gl);
+        log_gl_buffer(
+            render_context,
+            self.gl.borrow().as_ref(),
+            &format!("Buffer:of_indices {self}"),
+            WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER,
+            0,
+            0, // 3, // view.count as usize,
+        );
+    }
+
+    //fp bind_to_context_buffer
+    /// Bind the buffer to a context (e.g for indices to a vao)
+    pub fn bind_to_context_buffer(&self, render_context: &Model3DWebGL, target: u32) {
+        let gl_buffer_ref = self.gl.borrow();
+        let gl_buffer = gl_buffer_ref.as_ref();
+        render_context.bind_buffer(target, gl_buffer);
+    }
+
+    //fp bind_to_vao_attr
+    /// Bind the buffer as a vertex attribute to the current VAO
+    pub fn bind_to_vao_attr(
+        &self,
+        render_context: &Model3DWebGL,
+        attr_id: <Program as GlProgram>::GlAttrId,
+        count: u32,
+        ele_type: model3d_base::BufferElementType,
+        byte_offset: u32,
+        stride: u32,
+    ) {
+        let ele_type = {
+            use model3d_base::BufferElementType::*;
+            match ele_type {
+                Float32 => WebGl2RenderingContext::FLOAT,
+                Float16 => WebGl2RenderingContext::HALF_FLOAT,
+                Int8 => WebGl2RenderingContext::BYTE,
+                Int16 => WebGl2RenderingContext::SHORT,
+                Int32 => WebGl2RenderingContext::INT,
+            }
+        };
+        let gl_buffer_ref = self.gl.borrow();
+        let gl_buffer = gl_buffer_ref.as_ref();
+        render_context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, gl_buffer);
+        render_context.enable_vertex_attrib_array(attr_id);
+        log_gl_buffer(
+            render_context,
+            self.gl.borrow().as_ref(),
+            &format!("Buffer:bind_to_vao_attr {attr_id}, #{count}, {ele_type:?}, {stride}, {byte_offset}"),
+            0,
+            0,
+            0, // Do not output the buffer data
+        );
+        render_context.vertex_attrib_pointer_with_i32(
+            attr_id,
+            count as i32,
+            ele_type,
+            false,
+            stride as i32,
+            byte_offset as i32,
+        );
+    }
+
+    //mp bind_buffer_range
+    pub fn bind_buffer_range(
+        &self,
+        render_context: &Model3DWebGL,
+        buffer_type: u32,
+        gl_uindex: u32,
+        byte_offset: i32,
+        byte_length: i32,
+    ) {
+        let gl_buffer_ref = self.gl.borrow();
+        let gl_buffer = gl_buffer_ref.as_ref();
+        log_gl_buffer(
+            render_context,
+            self.gl.borrow().as_ref(),
+            &format!(
+                "Buffer:bind_buffer_range: {buffer_type}, {gl_uindex}, {byte_offset}, #{byte_length}"
+            ),
+            0,
+            0,
+            0, // Do not output the buffer data
+        );
+        render_context.bind_buffer_range_with_i32_and_i32(
+            buffer_type,
+            gl_uindex,
+            gl_buffer,
+            byte_offset,
+            byte_length,
+        );
+    }
+
+    //mp uniform_buffer
+    /// Create the OpenGL
+    pub fn uniform_buffer<F: Sized>(
+        &mut self,
+        render_context: &Model3DWebGL,
+        data: &[F],
+        is_dynamic: bool,
+    ) -> Result<(), ()> {
+        assert!(self.is_none());
+        let byte_length = std::mem::size_of::<F>() * data.len();
+        let buffer: *const u8 = &data[0] as *const F as *const u8;
+        let buffer = unsafe { std::slice::from_raw_parts(buffer, byte_length) };
+
+        let gl = render_context.create_buffer().unwrap();
+        render_context.bind_buffer(WebGl2RenderingContext::UNIFORM_BUFFER, Some(&gl));
+        // render_context.buffer_data_with_u8_array(
+        // WebGl2RenderingContext::UNIFORM_BUFFER,
+        // buffer,
+        // WebGl2RenderingContext::STATIC_DRAW,
+        // );
+        unsafe {
+            let buf_view = js_sys::Uint8Array::view(buffer);
+            render_context.buffer_data_with_array_buffer_view(
+                WebGl2RenderingContext::UNIFORM_BUFFER,
+                &buf_view,
+                WebGl2RenderingContext::STATIC_DRAW,
+            );
+        }
+        render_context.bind_buffer(WebGl2RenderingContext::UNIFORM_BUFFER, None);
+        *self.gl.borrow_mut() = Some(gl);
+        log_gl_buffer(
+            render_context,
+            self.gl.borrow().as_ref(),
+            &format!("Buffer:uniform_buffer: {is_dynamic}"),
+            WebGl2RenderingContext::UNIFORM_BUFFER,
+            0,
+            0, // Do not output the buffer data
+        );
+        Ok(())
+    }
+
+    //fp uniform_update_data
+    pub fn uniform_update_data<F: std::fmt::Debug>(
+        &self,
+        render_context: &Model3DWebGL,
+        data: &[F],
+        byte_offset: u32,
+    ) {
+        let byte_length = std::mem::size_of::<F>() * data.len();
+        let buffer: *const u8 = &data[0] as *const F as *const u8;
+        let buffer = unsafe { std::slice::from_raw_parts(buffer, byte_length) };
+
+        let gl_buffer_ref = self.gl.borrow();
+        let gl_buffer = gl_buffer_ref.as_ref();
+        render_context.bind_buffer(WebGl2RenderingContext::UNIFORM_BUFFER, gl_buffer);
+        render_context.buffer_sub_data_with_i32_and_u8_array(
+            WebGl2RenderingContext::UNIFORM_BUFFER,
+            byte_offset as i32,
+            buffer,
+        );
+        log_gl_buffer(
+            render_context,
+            self.gl.borrow().as_ref(),
+            &format!("uniform_update_data: {:?} {}", data, byte_offset),
+            0,
+            0,
+            0,
+        );
     }
 
     //zz All done
@@ -106,42 +283,3 @@ impl Buffer {
 
 //ip GlBuffer for Buffer
 impl crate::GlBuffer for Buffer {}
-
-//a Stuff that needs to be webgled
-// for vertex buffer
-//fp gl_element_type
-// fn gl_element_type(&self) -> gl::types::GLuint {
-//     use BufferElementType::*;
-//     match self.ele_type {
-//         Float32 => gl::FLOAT,
-//         Float16 => gl::HALF_FLOAT,
-//         Int8 => gl::BYTE,
-//         Int16 => gl::SHORT,
-//         Int32 => gl::INT,
-//     }
-// }
-
-//fp bind_to_vao
-// Bind the buffer as a vertex attribute to the current VAO
-// pub fn bind_to_vao(&self, attr_index: gl::types::GLuint) {
-//     unsafe {
-//         gl::BindBuffer(gl::ARRAY_BUFFER, self.gl_buffer());
-//         gl::EnableVertexAttribArray(attr_index);
-//         gl::VertexAttribPointer(
-//             attr_index,
-//             self.count as i32, // size
-//             self.gl_element_type(),
-//             gl::FALSE,          // normalized
-//             self.stride as i32, // stride
-//             std::mem::transmute::<usize, *const std::os::raw::c_void>(self.byte_offset as usize), // ptr
-//         );
-//     }
-// }
-// For index buffer
-//fp bind_to_vao
-// Bind the index buffer to the current VAO
-//     pub fn bind_to_vao(&self) {
-//         unsafe {
-//             gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, self.gl_buffer());
-//         }
-//     }

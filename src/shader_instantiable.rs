@@ -25,6 +25,8 @@ where
     instantiable: &'a model3d_base::Instantiable<G>,
     // vaos is 1-to-1 with instantiable::vertices, specific to this shader (class)
     vaos: Vec<G::Vao>,
+    // The program NEED NOT be borrowed, if the program's uniforms
+    // required for the draw are recorded during 'new_vao'
     program: &'a G::Program,
 }
 
@@ -74,7 +76,7 @@ where
         })
     }
 
-    // gl_draw
+    //fp gl_draw
     /// Draw this [ShaderInstantiable] given an [model3d_base::Instance] data
     pub fn gl_draw(&self, context: &mut G, instance: &model3d_base::Instance<G>) {
         // shader camera matrix (already set?)

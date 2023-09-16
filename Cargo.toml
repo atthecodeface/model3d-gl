@@ -6,8 +6,10 @@ edition = "2021"
 [dependencies]
 geo-nd   = "0.1.0"
 gl = "0.10.0"
+js-sys = ">=0.3.64"
 indent-display = "0.1.1"
 model3d-base = { path="../model3d-rs" }
+wasm-bindgen = ">=0.2.74"
 
 [dependencies.web-sys]
 features = [

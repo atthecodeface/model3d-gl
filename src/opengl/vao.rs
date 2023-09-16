@@ -17,44 +17,6 @@ pub struct Vao {
 
 //ip Vao
 impl Vao {
-    //fp new
-    pub fn new(
-        context: &mut Model3DOpenGL,
-        program: &Program,
-        vertices: &Vertices<Model3DOpenGL>,
-    ) -> Self {
-        let (indices, position, attrs) = vertices.borrow();
-        utils::check_errors().unwrap();
-        let mut gl_vao = 0;
-        unsafe {
-            gl::GenVertexArrays(1, &mut gl_vao);
-            gl::BindVertexArray(gl_vao);
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, indices.gl_buffer().gl_buffer());
-            println!("VAO {} {:?}", gl_vao, indices);
-        }
-        utils::check_errors().expect("Added indices to VAO");
-        for (index, vertex_attr) in program.attributes() {
-            if *vertex_attr == model3d_base::VertexAttr::Position {
-                println!(".. posn {} {}", *index, position);
-                position.bind_to_vao_attr(context, index);
-                utils::check_errors().unwrap();
-            } else {
-                for (va, buffer) in attrs {
-                    if *vertex_attr == *va {
-                        println!(".. {:?} {} {}", *vertex_attr, *index, buffer);
-                        buffer.bind_to_vao_attr(context, index);
-                    }
-                    utils::check_errors().unwrap();
-                }
-            }
-        }
-        unsafe {
-            gl::BindVertexArray(0);
-        }
-        utils::check_errors().unwrap();
-        Self { gl_vao }
-    }
-
     //fp bind_vao
     pub fn bind_vao(&self) {
         unsafe {

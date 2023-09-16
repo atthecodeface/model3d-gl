@@ -38,13 +38,20 @@ pub struct Program {
     /// The GL ID of the program
     program: WebGlProgram,
     /// attribute names
-    attributes: Vec<(i32, model3d_base::VertexAttr)>,
-    /// attribute names
+    attributes: Vec<(u32, model3d_base::VertexAttr)>,
+    /// uniform names
     uniforms: Vec<(WebGlUniformLocation, UniformId)>,
+    /// uniform buffer names
+    uniform_buffers: Vec<(u32, usize)>,
 }
 
-///ip Program
+//ip Program
 impl Program {
+    //ap program
+    pub fn program(&self) -> &WebGlProgram {
+        &self.program
+    }
+
     //fp link_program
     /// Compile a program from a slice of kind/source pairs
     pub fn link_program(
@@ -72,10 +79,12 @@ impl Program {
 
         let attributes = Vec::new();
         let uniforms = Vec::new();
+        let uniform_buffers = Vec::new();
         Ok(Program {
             program,
             attributes,
             uniforms,
+            uniform_buffers,
         })
     }
 
@@ -91,6 +100,7 @@ impl Program {
         if attr_index < 0 {
             Err(format!("Unable to find attribute {} in program", name))
         } else {
+            let attr_index = attr_index as u32;
             self.attributes.push((attr_index, vertex_attr));
             Ok(self)
         }
@@ -113,22 +123,31 @@ impl Program {
     }
 
     //mp add_uniform_buffer_name
-    // Add a uniform buffer (or 'block') to the [Program] from its name (that should be in the shader source)
-    // pub fn add_uniform_buffer_name(
-    //     &mut self,
-    //     context: &WebGl2RenderingContext,
-    //     name: &str,
-    //     id: usize,
-    // ) -> Result<&mut Self, String> {
-    //     let uniform_index: str = context.get_uniform_block_index(&self.program, name);
-    //     if uniform_index == gl::INVALID_INDEX {
-    //         Err(format!("Unable to find uniform block {} in program", name))
-    //     } else {
-    //         self.uniforms.push((0, UniformId::Buffer(id)));
-    //         Ok(self)
-    //     }
-    // }
+    /// WebGl2RenderingContext supports uniform buffers
+    pub fn add_uniform_buffer_name(
+        &mut self,
+        context: &WebGl2RenderingContext,
+        name: &str,
+        id: usize,
+    ) -> Result<&mut Self, String> {
+        let uniform_index = context.get_uniform_block_index(&self.program, name);
+        //        if uniform_index == gl::INVALID_INDEX {
+        //            Err(format!("Unable to find uniform block {} in program", name))
+        //        } else {
+        self.uniform_buffers.push((uniform_index, id));
+        Ok(self)
+        //        }
+    }
 
+    //mp uniform_buffer
+    pub fn uniform_buffer(&self, uniform_id: usize) -> Option<u32> {
+        for (gl_id, u) in &self.uniform_buffers {
+            if *u == uniform_id {
+                return Some(*gl_id);
+            }
+        }
+        None
+    }
     //fp set_used
     pub fn set_used(&self, context: &WebGl2RenderingContext) {
         context.use_program(Some(&self.program));
@@ -137,13 +156,13 @@ impl Program {
 
 //ip GlProgram for Program
 impl GlProgram for Program {
-    type GlAttrId = i32;
+    type GlAttrId = u32;
     type GlUniformId<'a> = &'a WebGlUniformLocation;
     // type Context = WebGl2RenderingContext;
-    fn attributes(&self) -> &[(i32, model3d_base::VertexAttr)] {
+    fn attributes(&self) -> &[(Self::GlAttrId, model3d_base::VertexAttr)] {
         &self.attributes
     }
-    fn uniform<'a>(&'a self, uniform_id: UniformId) -> Option<Self::GlUniformId<'a>> {
+    fn uniform(&self, uniform_id: UniformId) -> Option<Self::GlUniformId<'_>> {
         for (gl_id, u) in &self.uniforms {
             if *u == uniform_id {
                 return Some(gl_id);
