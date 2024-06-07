@@ -106,7 +106,7 @@ pub trait Gl:
     model3d_base::Renderable<
         Buffer = <Self as Gl>::Buffer,
         Vertices = Vertices<Self>,
-        View = BufferView<Self>,
+        Accessor = BufferView<Self>,
     > + std::fmt::Debug
 {
     // Lose Id?

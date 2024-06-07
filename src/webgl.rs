@@ -218,7 +218,7 @@ impl Gl for Model3DWebGL {
 //ip model3d_base::Renderable for Model3DWebGL
 impl model3d_base::Renderable for Model3DWebGL {
     type Buffer = buffer::Buffer;
-    type View = crate::BufferView<Self>;
+    type Accessor = crate::BufferView<Self>;
     type Texture = crate::Texture;
     type Material = crate::Material;
     type Vertices = crate::Vertices<Self>;
@@ -242,7 +242,7 @@ impl model3d_base::Renderable for Model3DWebGL {
     /// Initialize a buffer view client
     fn init_buffer_view_client(
         &mut self,
-        client: &mut Self::View,
+        client: &mut Self::Accessor,
         buffer_view: &model3d_base::BufferAccessor<Self>,
         attr: model3d_base::VertexAttr,
     ) {

@@ -338,8 +338,8 @@ where
     }
 }
 
-//ip ViewClient for BufferView
-impl<G> model3d_base::ViewClient for BufferView<G> where G: Gl {}
+//ip AccessorClient for BufferView
+impl<G> model3d_base::AccessorClient for BufferView<G> where G: Gl {}
 
 //ip Display for BufferView
 impl<G> std::fmt::Display for BufferView<G>
