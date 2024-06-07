@@ -65,7 +65,7 @@ where
 
     //mp of_view
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    fn of_view(&mut self, view: &model3d_base::BufferView<G>, render_context: &mut G) {
+    fn of_view(&mut self, view: &model3d_base::BufferAccessor<G>, render_context: &mut G) {
         view.data.create_client(render_context);
         self.count = view.count;
         self.ele_type = view.ele_type;
@@ -214,7 +214,7 @@ where
 {
     //mp of_view
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    fn of_view(view: &model3d_base::BufferView<G>, render_context: &mut G) -> Self {
+    fn of_view(view: &model3d_base::BufferAccessor<G>, render_context: &mut G) -> Self {
         let mut gl_buffer = <G as Gl>::Buffer::default();
         render_context.init_buffer_of_indices(&mut gl_buffer, view);
         let count = view.count;
@@ -320,7 +320,7 @@ where
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
     pub fn init_buffer_view_client(
         &mut self,
-        view: &model3d_base::BufferView<G>,
+        view: &model3d_base::BufferAccessor<G>,
         attr: VertexAttr,
         renderer: &mut G,
     ) {

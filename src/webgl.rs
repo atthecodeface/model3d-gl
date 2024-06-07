@@ -92,7 +92,7 @@ impl Gl for Model3DWebGL {
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
-        view: &model3d_base::BufferView<Self>,
+        view: &model3d_base::BufferAccessor<Self>,
     ) {
         buffer.of_indices(view, self);
     }
@@ -243,7 +243,7 @@ impl model3d_base::Renderable for Model3DWebGL {
     fn init_buffer_view_client(
         &mut self,
         client: &mut Self::View,
-        buffer_view: &model3d_base::BufferView<Self>,
+        buffer_view: &model3d_base::BufferAccessor<Self>,
         attr: model3d_base::VertexAttr,
     ) {
         client.init_buffer_view_client(buffer_view, attr, self);

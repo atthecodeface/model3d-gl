@@ -88,7 +88,7 @@ pub enum GlShaderType {
 /// copy of a [u8] that forms the values for vertices and indices etc.
 ///
 /// A single GlBuffer will be cloned for different
-/// model3d_base::BufferView of the same BufferData (by the
+/// model3d_base::BufferAccessor of the same BufferData (by the
 /// [VertexBuffer] type)
 pub trait GlBuffer: Default + Clone + std::fmt::Debug + model3d_base::BufferClient {}
 
@@ -143,7 +143,7 @@ pub trait Gl:
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
-        view: &model3d_base::BufferView<Self>,
+        view: &model3d_base::BufferAccessor<Self>,
     );
 
     //mp uniform_buffer_create

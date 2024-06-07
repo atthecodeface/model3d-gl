@@ -1,9 +1,7 @@
 //a Imports
-use super::{Model3DWebGL, Program};
-use crate::{GlProgram, Vertices};
+use super::{Model3DWebGL};
 use web_sys::{WebGl2RenderingContext, WebGlVertexArrayObject};
 
-use crate::console_log;
 use crate::webgl_log::log_gl_vao;
 
 //a Vao

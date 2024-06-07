@@ -1,6 +1,6 @@
 //a Imports
 use super::utils;
-use super::{Model3DOpenGL, Program};
+use super::{Model3DOpenGL};
 use crate::{GlProgram, Vertices};
 
 //a Vao

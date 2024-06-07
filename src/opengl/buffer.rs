@@ -33,7 +33,7 @@ use std::rc::Rc;
 /// duplicates - the reference count should ont be changed either as
 /// it is the *same* BufferData instance that is invoking the creation
 ///
-/// For indices a buffer is created for the [model3d_base::BufferView], as
+/// For indices a buffer is created for the [model3d_base::BufferAccessor], as
 /// the buffer in this case must be an OpenGL ELEMENT_ARRAY_BUFFER;
 /// this could perhaps be optimized to reduce the number of OpenGL
 /// buffers with much more code.
@@ -95,7 +95,7 @@ impl Buffer {
 
     //mp of_indices
     /// Create the OpenGL ELEMENT_ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    pub fn of_indices(&mut self, view: &model3d_base::BufferView<Model3DOpenGL>) {
+    pub fn of_indices(&mut self, view: &model3d_base::BufferAccessor<Model3DOpenGL>) {
         assert!(self.is_none());
         let mut gl: gl::types::GLuint = 0;
         let ele_size = {
@@ -104,7 +104,7 @@ impl Buffer {
                 Int8 => 1,
                 Int16 => 2,
                 Int32 => 4,
-                _ => panic!("Indices BufferView must have an int element type"),
+                _ => panic!("Indices BufferAccessor must have an int element type"),
             }
         };
         let byte_length = ele_size * view.count;
@@ -161,7 +161,7 @@ impl Buffer {
 
     //mp uniform_buffer
     /// Create the OpenGL
-    pub fn uniform_buffer<F: Sized>(&mut self, data: &[F], is_dynamic: bool) -> Result<(), ()> {
+    pub fn uniform_buffer<F: Sized>(&mut self, data: &[F], _is_dynamic: bool) -> Result<(), ()> {
         assert!(self.is_none());
         let buffer = data.as_ptr();
         let byte_length = std::mem::size_of::<F>() * data.len();

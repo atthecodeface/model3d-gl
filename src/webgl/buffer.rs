@@ -22,7 +22,7 @@ use web_sys::{WebGl2RenderingContext, WebGlBuffer};
 /// duplicates - the reference count should ont be changed either as
 /// it is the *same* BufferData instance that is invoking the creation
 ///
-/// For indices a buffer is created for the [model3d_rs::BufferView], as
+/// For indices a buffer is created for the [model3d_rs::BufferAccessor], as
 /// the buffer in this case must be an OpenGL ELEMENT_ARRAY_BUFFER;
 /// this could perhaps be optimized to reduce the number of OpenGL
 /// buffers with much more code.
@@ -93,7 +93,7 @@ impl Buffer {
     /// Create the OpenGL ELEMENT_ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
     pub fn of_indices(
         &mut self,
-        view: &model3d_base::BufferView<Model3DWebGL>,
+        view: &model3d_base::BufferAccessor<Model3DWebGL>,
         render_context: &Model3DWebGL,
     ) {
         assert!(self.is_none());
