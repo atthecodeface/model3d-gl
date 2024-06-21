@@ -103,7 +103,8 @@ pub trait GlVao: Sized {}
 ///
 /// The same is true of Clone, but that is too burdensome for Gl
 pub trait Gl:
-    model3d_base::Renderable<
+    std::fmt::Debug
+    + model3d_base::Renderable<
         Buffer = <Self as Gl>::Buffer,
         Vertices = Vertices<Self>,
         Accessor = BufferView<Self>,

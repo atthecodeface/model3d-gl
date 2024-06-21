@@ -1,6 +1,6 @@
 //a Imports
 use super::utils;
-use super::{Model3DOpenGL};
+use super::Model3DOpenGL;
 use crate::{GlProgram, Vertices};
 
 //a Vao
@@ -13,15 +13,17 @@ use crate::{GlProgram, Vertices};
 /// cannot outlive the GL buffer for the vertices and indices etc
 pub struct Vao {
     gl_vao: u32,
+    index_type: gl::types::GLuint,
 }
 
 //ip Vao
 impl Vao {
     //fp bind_vao
-    pub fn bind_vao(&self) {
+    pub fn bind_vao(&self) -> gl::types::GLuint {
         unsafe {
             gl::BindVertexArray(self.gl_vao);
         }
+        self.index_type
     }
 
     //fp create_from_indices
@@ -37,7 +39,14 @@ impl Vao {
             println!("VAO {} {:?}", gl_vao, indices);
         }
         utils::check_errors().expect("Added indices to VAO");
-        Ok(Self { gl_vao })
+        let index_type = {
+            match indices.ele_type {
+                model3d_base::BufferElementType::Int16 => gl::UNSIGNED_SHORT,
+                model3d_base::BufferElementType::Int32 => gl::UNSIGNED_INT,
+                _ => gl::UNSIGNED_BYTE,
+            }
+        };
+        Ok(Self { gl_vao, index_type })
     }
 }
 

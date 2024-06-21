@@ -128,7 +128,7 @@ impl Gl for Model3DOpenGL {
     //mp draw_primitive
     fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
         // (if p.vertices_index different to last)
-        vaos[primitive.vertices_index()].bind_vao();
+        let index_type = vaos[primitive.vertices_index()].bind_vao();
         use model3d_base::PrimitiveType::*;
         let gl_type = match primitive.primitive_type() {
             Points => gl::POINTS,
@@ -143,7 +143,7 @@ impl Gl for Model3DOpenGL {
             gl::DrawElements(
                 gl_type,
                 primitive.index_count() as i32,
-                gl::UNSIGNED_BYTE, // index_type,
+                index_type,
                 std::mem::transmute(primitive.byte_offset()),
             );
         }

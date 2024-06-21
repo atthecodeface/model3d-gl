@@ -99,7 +99,7 @@ impl Buffer {
         assert!(self.is_none());
         render_context.bind_vertex_array(None);
         let data = view.data.as_slice();
-        assert!(view.byte_offset == 0, "Have not got subranging");
+        let data = data.split_at(view.byte_offset as usize).1;
         let gl = render_context.create_buffer().unwrap();
         render_context.bind_buffer(WebGl2RenderingContext::ELEMENT_ARRAY_BUFFER, Some(&gl));
         // render_context.buffer_data_with_u8_array(
@@ -156,6 +156,7 @@ impl Buffer {
                 Int32 => WebGl2RenderingContext::INT,
             }
         };
+        crate::console_log!("bind_to_vao_attr");
         let gl_buffer_ref = self.gl.borrow();
         let gl_buffer = gl_buffer_ref.as_ref();
         render_context.bind_buffer(WebGl2RenderingContext::ARRAY_BUFFER, gl_buffer);

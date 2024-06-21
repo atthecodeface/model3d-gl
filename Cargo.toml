@@ -15,11 +15,11 @@ model3d-base = { path="../model3d-base" }
 
 [dependencies.gl]
 optional = true
-version = ">=0.10.0"
+version = ">=0.14.0"
 
 [dependencies.wasm-bindgen]
 optional = true
-version = ">=0.2.74"
+version = ">=0.2.92"
 
 [dependencies.js-sys]
 optional = true
@@ -27,7 +27,7 @@ version = ">=0.3.64"
 
 [dependencies.web-sys]
 optional = true
-version = ">=0.3.40"
+version = ">=0.3.69"
 features = [
   'console',
   'CanvasRenderingContext2d',

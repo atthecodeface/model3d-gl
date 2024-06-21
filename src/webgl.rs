@@ -142,8 +142,8 @@ impl Gl for Model3DWebGL {
 
     //mp draw_primitive
     fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
-        console_log!("draw_primitive {primitive:?}");
-        vaos[primitive.vertices_index()].bind_vao(self);
+        console_log!("draw_primitive with override {primitive:?}");
+        let index_type = vaos[primitive.vertices_index()].bind_vao(self);
         use model3d_base::PrimitiveType::*;
         let gl_type = match primitive.primitive_type() {
             Points => WebGl2RenderingContext::POINTS,
@@ -157,7 +157,7 @@ impl Gl for Model3DWebGL {
         self.draw_elements_with_i32(
             gl_type,
             primitive.index_count() as i32,
-            WebGl2RenderingContext::UNSIGNED_BYTE,
+            index_type,
             primitive.byte_offset() as i32,
         );
     }

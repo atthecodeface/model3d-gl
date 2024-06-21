@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    buffer.rs
-@brief   An OpenGL buffer representation Part of geometry library
- */
-
 //a Imports
 use std::marker::PhantomData;
 
@@ -41,13 +23,14 @@ where
 {
     /// Ref-counted buffer
     gl_buffer: <G as Gl>::Buffer,
-    /// Number of elements per vertex - 1 to 4
-    pub count: u32,
+    /// For attributes: number of elements per vertex (1 to 4, or 4, 9 or 16)
+    /// For indices: number of indices in the buffer
+    pub elements_per_data: u32,
     /// The type of each element
     pub ele_type: model3d_base::BufferElementType,
     /// Offset from start of buffer to first byte of data
     pub byte_offset: u32,
-    /// Stride of data in the buffer - 0 for count*sizeof(ele_type)
+    /// Stride of data in the buffer - 0 for elements_per_data*sizeof(ele_type)
     pub stride: u32,
 }
 
@@ -67,7 +50,7 @@ where
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
     fn of_view(&mut self, view: &model3d_base::BufferAccessor<G>, render_context: &mut G) {
         view.data.create_client(render_context);
-        self.count = view.count;
+        self.elements_per_data = view.elements_per_data;
         self.ele_type = view.ele_type;
         self.byte_offset = view.byte_offset;
         self.stride = view.stride;
@@ -84,7 +67,7 @@ where
         context.buffer_bind_to_vao_attr(
             &self.gl_buffer,
             attr_id,
-            self.count,
+            self.elements_per_data,
             self.ele_type,
             self.byte_offset,
             self.stride,
@@ -101,13 +84,13 @@ where
 {
     fn default() -> Self {
         let gl_buffer = <G as Gl>::Buffer::default();
-        let count = 0;
+        let elements_per_data = 0;
         let ele_type = BufferElementType::Float32;
         let byte_offset = 0;
         let stride = 0;
         Self {
             gl_buffer,
-            count,
+            elements_per_data,
             ele_type,
             byte_offset,
             stride,
@@ -122,13 +105,13 @@ where
 {
     fn clone(&self) -> Self {
         let gl_buffer = self.gl_buffer.clone();
-        let count = self.count;
+        let elements_per_data = self.elements_per_data;
         let ele_type = self.ele_type;
         let byte_offset = self.byte_offset;
         let stride = self.stride;
         Self {
             gl_buffer,
-            count,
+            elements_per_data,
             ele_type,
             byte_offset,
             stride,
@@ -145,7 +128,7 @@ where
         write!(
             f,
             "Vert({:?}+{}:#{} {:?} @{})",
-            self.gl_buffer, self.byte_offset, self.count, self.ele_type, self.stride
+            self.gl_buffer, self.byte_offset, self.elements_per_data, self.ele_type, self.stride
         )
     }
 }
@@ -167,7 +150,7 @@ where
 {
     /// Ref-counted buffer
     gl_buffer: <G as Gl>::Buffer,
-    /// Number of elements per index - 1 to 4
+    /// Number of indices in the buffer
     pub count: u32,
     /// The type of each element
     pub ele_type: BufferElementType,
@@ -217,11 +200,11 @@ where
     fn of_view(view: &model3d_base::BufferAccessor<G>, render_context: &mut G) -> Self {
         let mut gl_buffer = <G as Gl>::Buffer::default();
         render_context.init_buffer_of_indices(&mut gl_buffer, view);
-        let count = view.count;
+        let count = view.elements_per_data;
         let ele_type = view.ele_type;
         println!(
             "Create indices buffer {} of view {:?}#{}",
-            gl_buffer, view.ele_type, view.count
+            gl_buffer, view.ele_type, view.elements_per_data
         );
         Self {
             gl_buffer,
