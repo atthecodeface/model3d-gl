@@ -66,7 +66,7 @@ impl GlShader for Shader {
     type Id<'a> = &'a WebGlShader;
     //fp id
     /// Get the shader program id
-    fn id<'a>(&'a self) -> &'a WebGlShader {
+    fn id(&self) -> &WebGlShader {
         &self.0
     }
 }

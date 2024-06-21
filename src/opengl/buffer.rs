@@ -148,7 +148,7 @@ impl Buffer {
                 ele_type,
                 gl::FALSE,     // normalized
                 stride as i32, // stride
-                std::mem::transmute::<usize, *const std::os::raw::c_void>(byte_offset as usize), // ptr
+                byte_offset as usize as *const std::ffi::c_void,
             );
             crate::opengl_utils::check_errors().unwrap();
             eprintln!("done");
@@ -160,7 +160,7 @@ impl Buffer {
     pub fn uniform_buffer<F: Sized>(&mut self, data: &[F], _is_dynamic: bool) -> Result<(), ()> {
         assert!(self.is_none());
         let buffer = data.as_ptr();
-        let byte_length = std::mem::size_of::<F>() * data.len();
+        let byte_length = std::mem::size_of_val(data);
         let mut gl: gl::types::GLuint = 0;
         unsafe {
             gl::BindVertexArray(0);

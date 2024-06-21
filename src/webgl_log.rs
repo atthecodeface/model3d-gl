@@ -16,7 +16,7 @@ macro_rules! console_log {
     // `bare_bones`
     ($($t:tt)*) => (
         #[allow(unused_unsafe)]
-        unsafe { crate::webgl_log::log(&format_args!($($t)*).to_string())}
+        unsafe { $crate::webgl_log::log(&format_args!($($t)*).to_string())}
     )
 }
 
@@ -37,7 +37,7 @@ pub fn log_gl_buffer(
 }
 
 pub fn log_gl_vao(
-    context: &WebGl2RenderingContext,
+    _context: &WebGl2RenderingContext,
     gl_vao: Option<&WebGlVertexArrayObject>,
     reason: &str,
 ) {

@@ -16,6 +16,13 @@ use vao::Vao;
 #[derive(Debug)]
 pub struct Model3DOpenGL {}
 
+//ip Default for Model3DOpenGL
+impl Default for Model3DOpenGL {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 //ip Model3DOpenGL
 impl Model3DOpenGL {
     pub fn new() -> Self {
@@ -144,7 +151,7 @@ impl Gl for Model3DOpenGL {
                 gl_type,
                 primitive.index_count() as i32,
                 index_type,
-                std::mem::transmute(primitive.byte_offset()),
+                primitive.byte_offset() as *const std::ffi::c_void,
             );
         }
     }

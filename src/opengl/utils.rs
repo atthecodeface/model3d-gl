@@ -24,13 +24,13 @@ pub fn check_errors() -> Result<(), Vec<String>> {
                 break;
             }
             gl::INVALID_ENUM => {
-                v.push(format!("Invalid enum (Gl error)"));
+                v.push("Invalid enum (Gl error)".to_string());
             }
             gl::INVALID_VALUE => {
-                v.push(format!("Invalid value (Gl error)"));
+                v.push("Invalid value (Gl error)".to_string());
             }
             gl::INVALID_OPERATION => {
-                v.push(format!("Invalid operation (Gl error)"));
+                v.push("Invalid operation (Gl error)".to_string());
             }
             x => {
                 v.push(format!("GL had error {}", x));

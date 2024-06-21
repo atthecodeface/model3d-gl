@@ -218,7 +218,7 @@ impl Buffer {
         is_dynamic: bool,
     ) -> Result<(), ()> {
         assert!(self.is_none());
-        let byte_length = std::mem::size_of::<F>() * data.len();
+        let byte_length = std::mem::size_of_val(data);
         let buffer: *const u8 = &data[0] as *const F as *const u8;
         let buffer = unsafe { std::slice::from_raw_parts(buffer, byte_length) };
 
@@ -257,7 +257,7 @@ impl Buffer {
         data: &[F],
         byte_offset: u32,
     ) {
-        let byte_length = std::mem::size_of::<F>() * data.len();
+        let byte_length = std::mem::size_of_val(data);
         let buffer: *const u8 = &data[0] as *const F as *const u8;
         let buffer = unsafe { std::slice::from_raw_parts(buffer, byte_length) };
 

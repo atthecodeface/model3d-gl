@@ -1,7 +1,8 @@
+//a Imports
 use crate::console_log;
 use crate::webgl_log::log_gl_vao;
 use crate::{Gl, GlProgram, GlShaderType, Mat4, UniformBuffer};
-use web_sys::{WebGl2RenderingContext, WebGlBuffer};
+use web_sys::WebGl2RenderingContext;
 
 mod shader;
 pub use shader::Shader;

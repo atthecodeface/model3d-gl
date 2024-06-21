@@ -59,7 +59,7 @@ pub trait GlShader: Sized {
         Self: 'a;
     //fp id
     /// Get the shader program id
-    fn id<'a>(&'a self) -> Self::Id<'a>;
+    fn id(&self) -> Self::Id<'_>;
 }
 
 //tt GlProgram
@@ -74,7 +74,7 @@ pub trait GlProgram: Sized {
 
     /// Attempt to retrieve a uniform from a [UniformId] - return None
     /// if the shader program does not have that uniform
-    fn uniform<'a>(&'a self, uniform_id: UniformId) -> Option<Self::GlUniformId<'a>>;
+    fn uniform(&self, uniform_id: UniformId) -> Option<Self::GlUniformId<'_>>;
 }
 
 //tt GlShaderType
