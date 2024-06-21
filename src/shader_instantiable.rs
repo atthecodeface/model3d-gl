@@ -42,14 +42,10 @@ where
         vertices: &Vertices<G>,
     ) -> Result<G::Vao, ()> {
         let (indices, position, attrs) = vertices.borrow();
-        dbg!(&indices, &position, &attrs);
         let mut gl_vao = context.vao_create_from_indices(indices)?;
-        // crate::opengl_utils::check_errors().unwrap();
         for (index, vertex_attr) in program.attributes() {
             if *vertex_attr == model3d_base::VertexAttr::Position {
-                dbg!(&position, &context,);
                 position.bind_to_vao_attr(context, index);
-                // crate::opengl_utils::check_errors().unwrap();
             } else {
                 for (va, buffer) in attrs {
                     if *vertex_attr == *va {
