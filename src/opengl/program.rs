@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    shader.rs
-@brief   Part of OpenGL support library
- */
-
 //a Documentation
 
 /*!
@@ -29,7 +11,7 @@ use std::ffi::CString;
 
 use super::utils;
 use super::Shader;
-use crate::UniformId;
+use crate::{TextureId, UniformId};
 
 //a Program
 //tp Program
@@ -37,14 +19,80 @@ use crate::UniformId;
 pub struct Program {
     /// The GL ID of the program
     id: gl::types::GLuint,
-    /// attribute names
+    /// attribute map
     attributes: Vec<(gl::types::GLuint, model3d_base::VertexAttr)>,
-    /// attribute names
+    /// uniform map from UniformId to location
     uniforms: Vec<(gl::types::GLint, UniformId)>,
+    /// texture map from TextureId to uniform location and unit
+    textures: Vec<(gl::types::GLint, TextureId, u32)>,
 }
 
 ///ip Program
 impl Program {
+    //mp get_attributes
+    pub fn get_attributes(&self) -> Vec<String> {
+        let mut count = 0;
+        unsafe {
+            gl::GetProgramiv(self.id, gl::ACTIVE_ATTRIBUTES, &mut count);
+        }
+        let mut result = Vec::with_capacity(count as usize);
+        for i in 0..(count as u32) {
+            let mut name: [u8; 256] = [0; 256];
+            let mut length = 0;
+            let mut size = 0;
+            let mut gl_type = 0;
+            unsafe {
+                gl::GetActiveAttrib(
+                    self.id,
+                    i,
+                    256,
+                    &mut length,
+                    &mut size,
+                    &mut gl_type,
+                    name.as_mut_ptr() as *mut gl::types::GLchar,
+                );
+            }
+            result.push(
+                std::str::from_utf8(&name[..length as usize])
+                    .unwrap()
+                    .to_string(),
+            );
+        }
+        result
+    }
+
+    //mp get_uniforms
+    pub fn get_uniforms(&self) -> Vec<String> {
+        let mut count = 0;
+        unsafe {
+            gl::GetProgramiv(self.id, gl::ACTIVE_UNIFORMS, &mut count);
+        }
+        let mut result = Vec::with_capacity(count as usize);
+        for i in 0..(count as u32) {
+            let mut name: [u8; 256] = [0; 256];
+            let mut length = 0;
+            let mut size = 0;
+            let mut gl_type = 0;
+            unsafe {
+                gl::GetActiveUniform(
+                    self.id,
+                    i,
+                    256,
+                    &mut length,
+                    &mut size,
+                    &mut gl_type,
+                    name.as_mut_ptr() as *mut gl::types::GLchar,
+                );
+            }
+            result.push(
+                std::str::from_utf8(&name[..length as usize])
+                    .unwrap()
+                    .to_string(),
+            );
+        }
+        result
+    }
+
     //fp link_program
     /// Compile a program from a slice of kind/source pairs
     pub fn link_program(shaders: &[&Shader]) -> Result<Program, String> {
@@ -70,20 +118,16 @@ impl Program {
         }
         utils::check_errors().expect("Linked");
 
-        //         for shader in shaders {
-        //             unsafe {
-        //                 gl::DetachShader(program_id, shader.id());
-        //                 // Don't delete the shader - that happens when the shader is dropped
-        //             }
-        //         }
-
         let attributes = Vec::new();
         let uniforms = Vec::new();
-        Ok(Program {
+        let textures = Vec::new();
+        let program = Program {
             id: program_id,
             attributes,
             uniforms,
-        })
+            textures,
+        };
+        Ok(program)
     }
 
     //mp add_attr_name
@@ -123,15 +167,40 @@ impl Program {
     }
 
     //mp add_uniform_buffer_name
-    /// Add a uniform buffer (or 'block') to the [Program] from its name (that should be in the shader source)
+    /// Add a uniform buffer (or 'block') to the [Program] from its
+    /// name (that should be in the shader source)
     pub fn add_uniform_buffer_name(&mut self, name: &str, id: usize) -> Result<&mut Self, String> {
         let name_c = CString::new(name).unwrap();
         let uniform_index = unsafe { gl::GetUniformBlockIndex(self.id, name_c.as_ptr()) };
         if uniform_index == gl::INVALID_INDEX {
             Err(format!("Unable to find uniform block {} in program", name))
         } else {
-            self.uniforms
-                .push((uniform_index as gl::types::GLint, UniformId::Buffer(id)));
+            self.uniforms.push((
+                uniform_index as gl::types::GLint,
+                UniformId::Buffer(id as u8),
+            ));
+            Ok(self)
+        }
+    }
+
+    //mp add_uniform_texture_name
+    /// Add a texture assigned to a texture unit and a named uniform sampler
+    ///
+    /// The unit is 0 upwards; it must be mapped to gl::TEXTURE<unit>
+    pub fn add_uniform_texture_name(
+        &mut self,
+        name: &str,
+        texture_id: TextureId,
+        unit: usize,
+    ) -> Result<&mut Self, String> {
+        let name_c = CString::new(name).unwrap();
+        let uniform_index = unsafe { gl::GetUniformLocation(self.id, name_c.as_ptr()) };
+        if uniform_index == (gl::INVALID_INDEX as i32) {
+            Err(format!("Unable to find texture {} in program", name))
+        } else {
+            let gl_unit = unit as u32;
+            self.textures
+                .push((uniform_index as gl::types::GLint, texture_id, gl_unit));
             Ok(self)
         }
     }
@@ -176,6 +245,17 @@ impl crate::GlProgram for Program {
         for (gl_id, u) in &self.uniforms {
             if *u == uniform_id {
                 return Some(*gl_id);
+            }
+        }
+        None
+    }
+    fn texture_uniform(
+        &self,
+        texture_id: crate::TextureId,
+    ) -> Option<(Self::GlUniformId<'_>, u32)> {
+        for (uniform, t, unit) in &self.textures {
+            if *t == texture_id {
+                return Some((*uniform, *unit));
             }
         }
         None

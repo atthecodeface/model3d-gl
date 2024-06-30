@@ -4,14 +4,20 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["webgl", "opengl"]
+default = ["webgl", "opengl", "serde"]
 webgl = ["dep:wasm-bindgen", "dep:js-sys", "dep:web-sys"]
 opengl = ["dep:gl"]
+serde = ["dep:serde"]
 
 [dependencies]
 geo-nd   = "0.1.0"
 indent-display = "0.1.1"
 model3d-base = { path="../model3d-base" }
+
+[dependencies.serde]
+optional = true
+version = ">=1.0.203"
+features = ["derive"]
 
 [dependencies.gl]
 optional = true
@@ -42,6 +48,7 @@ features = [
   'WebGl2RenderingContext',
   'WebGlProgram',
   'WebGlShader',
+  'WebGlTexture',
   'WebGlUniformLocation',
   'Window',
 ]

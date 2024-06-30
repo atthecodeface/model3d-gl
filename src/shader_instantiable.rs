@@ -1,6 +1,64 @@
 //a Imports
 use crate::{Gl, GlProgram, UniformId, Vertices};
 
+//a Shader structure
+//tp ShaderMaterialBaseData
+/// Change to u8s
+///
+/// base_color should be [u8; 4]
+///
+/// metallic should be u8
+/// roughness should be u8
+/// emissive_color should be [u8; 3]
+/// occlusion factor is from:
+///    A scalar parameter controlling the amount of occlusion applied. A value of `0.0` means no occlusion. A value of `1.0` means full occlusion. This value affects the final occlusion value as: `1.0 + strength * (<sampled occlusion texture value> - 1.0)`.
+
+#[derive(Default, Debug)]
+#[repr(C, packed)]
+pub struct ShaderMaterialBaseData {
+    base_color: [f32; 4],
+    metallic: f32,
+    roughness: f32,
+    occlusion_factor: f32,
+    emissive_factor: f32,
+}
+
+//ip ShaderMaterialBaseData
+impl ShaderMaterialBaseData {
+    pub fn of_material<M>(material: &M) -> Self
+    where
+        M: model3d_base::Material,
+    {
+        let base_data = material.base_data();
+        let (r, g, b, a) = base_data.rgba_tuple();
+        let base_color = [
+            r as f32 / 255.0,
+            g as f32 / 255.0,
+            b as f32 / 255.0,
+            a as f32 / 255.0,
+        ];
+        let (metallic, roughness) = base_data.metallic_roughness();
+        let occlusion_factor = 0.;
+        let emissive_factor = 0.;
+        Self {
+            base_color,
+            metallic,
+            roughness,
+            occlusion_factor,
+            emissive_factor,
+            ..Default::default()
+        }
+    }
+    pub fn as_slice(&self) -> &[f32] {
+        unsafe {
+            std::slice::from_raw_parts(
+                self as *const ShaderMaterialBaseData as *const f32,
+                std::mem::size_of_val(self) / std::mem::size_of::<f32>(),
+            )
+        }
+    }
+}
+
 //a ShaderInstantiable
 //tp ShaderInstantiable
 /// This is a shader-specific instantiable built from the vertices of an [model3d_base::Instantiable]
@@ -117,6 +175,22 @@ where
             .iter()
             .enumerate()
         {
+            let mat = p.material();
+            if mat.is_some() {
+                let mat = &self.instantiable.materials[mat.as_usize()];
+                context.program_set_uniform_floats_4(
+                    self.program,
+                    UniformId::Material,
+                    mat.base_data().as_slice(),
+                );
+                for (texture_id, ti) in mat.textures() {
+                    if !ti.is_none() {
+                        let gl_texture = &self.instantiable.textures[ti.as_usize()];
+                        context.program_use_texture(self.program, *texture_id, gl_texture);
+                    }
+                }
+            }
+
             // set MeshMatrix (if different to last)
             // Optimization using mesh uniform buffer
             // Bind a mat4-sized range of the matrices arrays to the Matrix uniform binding point
@@ -126,7 +200,6 @@ where
                 UniformId::MeshMatrix,
                 &self.instantiable.render_recipe.matrices[m],
             );
-            // set material info to that for shader_instantiable p.material_index,(if different to last)
             context.draw_primitive(&self.vaos, p);
         }
     }

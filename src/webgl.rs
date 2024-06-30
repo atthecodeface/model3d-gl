@@ -11,6 +11,8 @@ pub use program::Program;
 
 mod buffer;
 
+mod texture;
+
 mod vao;
 use vao::Vao;
 
@@ -46,6 +48,7 @@ impl Gl for Model3DWebGL {
     type Program = Program;
     type Buffer = buffer::Buffer;
     type Vao = vao::Vao;
+    type Texture = texture::Texture;
 
     //fp link_program
     /// Create a program from a list of compiled shaders
@@ -55,6 +58,7 @@ impl Gl for Model3DWebGL {
         named_attrs: &[(&str, model3d_base::VertexAttr)],
         named_uniforms: &[(&str, crate::UniformId)],
         named_uniform_buffers: &[(&str, usize)],
+        named_textures: &[(&str, crate::TextureId, usize)],
     ) -> Result<Self::Program, String> {
         let mut program = Program::link_program(&self.context, srcs)?;
         for (name, attr) in named_attrs {
@@ -65,6 +69,9 @@ impl Gl for Model3DWebGL {
         }
         for (name, uniform) in named_uniform_buffers {
             program.add_uniform_buffer_name(self, name, *uniform)?;
+        }
+        for (name, texture_id, unit) in named_textures {
+            program.add_uniform_texture_name(self, name, *texture_id, *unit)?;
         }
         Ok(program)
     }
@@ -125,6 +132,19 @@ impl Gl for Model3DWebGL {
         }
     }
 
+    //fp program_set_uniform_floats_4
+    fn program_set_uniform_floats_4(
+        &mut self,
+        program: &Self::Program,
+        id: crate::UniformId,
+        floats: &[f32],
+    ) {
+        console_log!("webgl: set uniform [vec4] {id:?} {floats:?}");
+        if let Some(u) = program.uniform(id) {
+            self.context.uniform4fv_with_f32_array(Some(u), floats);
+        }
+    }
+
     //mp program_bind_uniform_index
     fn program_bind_uniform_index(
         &mut self,
@@ -141,10 +161,27 @@ impl Gl for Model3DWebGL {
         }
     }
 
+    //mp program_use_texture
+    /// Requires the program to be 'used'
+    fn program_use_texture(
+        &mut self,
+        program: &<Self as Gl>::Program,
+        texture_id: crate::TextureId,
+        gl_texture: &<Self as Gl>::Texture,
+    ) {
+        console_log!("webgl: set texture {texture_id:?}");
+        if let Some((u, unit)) = program.texture_uniform(texture_id) {
+            self.context
+                .active_texture(WebGl2RenderingContext::TEXTURE0 + unit);
+            self.context
+                .bind_texture(WebGl2RenderingContext::TEXTURE_2D, gl_texture.gl_texture());
+            self.context.uniform1i(Some(u), unit as i32);
+        }
+    }
+
     //mp draw_primitive
     fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
-        console_log!("draw_primitive with override {primitive:?}");
-        let index_type = vaos[primitive.vertices_index()].bind_vao(self);
+        console_log!("webgl: draw_primitive {primitive:?}");
         use model3d_base::PrimitiveType::*;
         let gl_type = match primitive.primitive_type() {
             Points => WebGl2RenderingContext::POINTS,
@@ -155,12 +192,22 @@ impl Gl for Model3DWebGL {
             TriangleFan => WebGl2RenderingContext::TRIANGLE_FAN,
             TriangleStrip => WebGl2RenderingContext::TRIANGLE_STRIP,
         };
-        self.draw_elements_with_i32(
-            gl_type,
-            primitive.index_count() as i32,
-            index_type,
-            primitive.byte_offset() as i32,
-        );
+        let opt_vertices_index: Option<usize> = primitive.vertices_index().into();
+        if let Some(vertices_index) = opt_vertices_index {
+            let index_type = vaos[vertices_index].bind_vao(self);
+            self.draw_elements_with_i32(
+                gl_type,
+                primitive.index_count() as i32,
+                index_type,
+                primitive.byte_offset() as i32,
+            );
+        } else {
+            self.draw_arrays(
+                gl_type,
+                primitive.byte_offset() as i32,
+                primitive.index_count() as i32,
+            );
+        }
     }
 
     //mp bind_vao
@@ -220,7 +267,7 @@ impl Gl for Model3DWebGL {
 impl model3d_base::Renderable for Model3DWebGL {
     type Buffer = buffer::Buffer;
     type Accessor = crate::BufferView<Self>;
-    type Texture = crate::Texture;
+    type Texture = texture::Texture;
     type Material = crate::Material;
     type Vertices = crate::Vertices<Self>;
 
@@ -258,12 +305,28 @@ impl model3d_base::Renderable for Model3DWebGL {
         Self::Vertices::create(vertices, self)
     }
 
+    //mp create_texture_client
+    fn create_texture_client(&mut self, texture: &model3d_base::Texture<Self>) -> Self::Texture {
+        Self::Texture::of_texture(texture, self) // , self)
+    }
+
     //mp init_material_client
-    fn init_material_client(
+    fn init_material_client<M: model3d_base::Material>(
         &mut self,
         _client: &mut Self::Material,
-        _material: &dyn model3d_base::Material<Self>,
+        _material: &M,
     ) {
+    }
+
+    fn create_material_client<M>(
+        &mut self,
+        object: &model3d_base::Object<M, Self>,
+        material: &M,
+    ) -> crate::Material
+    where
+        M: model3d_base::Material,
+    {
+        crate::Material::create(self, object, material).unwrap()
     }
 
     //zz All done

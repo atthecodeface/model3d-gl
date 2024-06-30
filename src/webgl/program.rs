@@ -1,21 +1,3 @@
-/*a Copyright
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-@file    program.rs
-@brief   Part of WebGL support library
- */
-
 //a Documentation
 
 /*!
@@ -29,7 +11,7 @@ The attributes and uniforms can be accessed in a simple common manner
 use web_sys::{WebGl2RenderingContext, WebGlProgram, WebGlUniformLocation};
 
 use super::Shader;
-use crate::{GlProgram, GlShader, UniformId};
+use crate::{GlProgram, GlShader, TextureId, UniformId};
 
 //a Program
 //tp Program
@@ -43,6 +25,8 @@ pub struct Program {
     uniforms: Vec<(WebGlUniformLocation, UniformId)>,
     /// uniform buffer names
     uniform_buffers: Vec<(u32, usize)>,
+    /// texture map from TextureId to uniform location and unit
+    textures: Vec<(WebGlUniformLocation, TextureId, u32)>,
 }
 
 //ip Program
@@ -80,9 +64,11 @@ impl Program {
         let attributes = Vec::new();
         let uniforms = Vec::new();
         let uniform_buffers = Vec::new();
+        let textures = Vec::new();
         Ok(Program {
             program,
             attributes,
+            textures,
             uniforms,
             uniform_buffers,
         })
@@ -139,6 +125,25 @@ impl Program {
         //        }
     }
 
+    //mp add_uniform_texture_name
+    /// Add a texture assigned to a texture unit and a named uniform sampler
+    ///
+    /// The unit is 0 upwards; it must be mapped to gl::TEXTURE<unit>
+    pub fn add_uniform_texture_name(
+        &mut self,
+        context: &WebGl2RenderingContext,
+        name: &str,
+        texture_id: TextureId,
+        unit: usize,
+    ) -> Result<&mut Self, String> {
+        if let Some(uniform_index) = context.get_uniform_location(&self.program, name) {
+            self.textures.push((uniform_index, texture_id, unit as u32));
+            Ok(self)
+        } else {
+            Err(format!("Unable to find uniform {} in program", name))
+        }
+    }
+
     //mp uniform_buffer
     pub fn uniform_buffer(&self, uniform_id: usize) -> Option<u32> {
         for (gl_id, u) in &self.uniform_buffers {
@@ -166,6 +171,17 @@ impl GlProgram for Program {
         for (gl_id, u) in &self.uniforms {
             if *u == uniform_id {
                 return Some(gl_id);
+            }
+        }
+        None
+    }
+    fn texture_uniform(
+        &self,
+        texture_id: crate::TextureId,
+    ) -> Option<(Self::GlUniformId<'_>, u32)> {
+        for (uniform, t, unit) in &self.textures {
+            if *t == texture_id {
+                return Some((uniform, *unit));
             }
         }
         None

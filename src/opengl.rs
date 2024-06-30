@@ -7,6 +7,7 @@ mod program;
 pub use program::Program;
 
 mod buffer;
+mod texture;
 
 mod vao;
 use vao::Vao;
@@ -37,6 +38,7 @@ impl Gl for Model3DOpenGL {
     type Program = Program;
     type Buffer = buffer::Buffer;
     type Vao = vao::Vao;
+    type Texture = texture::Texture;
 
     //mp link_program
     /// Create a program from a list of compiled shaders
@@ -46,6 +48,7 @@ impl Gl for Model3DOpenGL {
         named_attrs: &[(&str, model3d_base::VertexAttr)],
         named_uniforms: &[(&str, crate::UniformId)],
         named_uniform_buffers: &[(&str, usize)],
+        named_textures: &[(&str, crate::TextureId, usize)],
     ) -> Result<Self::Program, String> {
         let mut program = Program::link_program(srcs)?;
         for (name, attr) in named_attrs {
@@ -56,6 +59,9 @@ impl Gl for Model3DOpenGL {
         }
         for (name, uniform) in named_uniform_buffers {
             program.add_uniform_buffer_name(name, *uniform)?;
+        }
+        for (name, texture_id, unit) in named_textures {
+            program.add_uniform_texture_name(name, *texture_id, *unit)?;
         }
         Ok(program)
     }
@@ -107,6 +113,7 @@ impl Gl for Model3DOpenGL {
     ) {
         buffer.bind_to_vao_attr(*attr_id, count, ele_type, byte_offset, stride);
     }
+
     //mp program_set_uniform_mat4
     fn program_set_uniform_mat4(&mut self, program: &Program, id: crate::UniformId, mat4: &Mat4) {
         if let Some(u) = program.uniform(id) {
@@ -115,6 +122,21 @@ impl Gl for Model3DOpenGL {
             }
         }
     }
+
+    //fp program_set_uniform_floats_4
+    fn program_set_uniform_floats_4(
+        &mut self,
+        program: &Self::Program,
+        id: crate::UniformId,
+        floats: &[f32],
+    ) {
+        if let Some(u) = program.uniform(id) {
+            unsafe {
+                gl::Uniform4fv(u, (floats.len() / 4) as i32, floats.as_ptr());
+            }
+        }
+    }
+
     //mp program_bind_uniform_index
     fn program_bind_uniform_index(
         &mut self,
@@ -122,20 +144,40 @@ impl Gl for Model3DOpenGL {
         uniform_buffer_id: usize,
         gl_uindex: u32,
     ) -> Result<(), ()> {
-        if let Some(u) = program.uniform(crate::UniformId::Buffer(uniform_buffer_id)) {
+        if let Some(u) = program.uniform(crate::UniformId::Buffer(uniform_buffer_id as u8)) {
             unsafe {
-                println!("Bind to {}", u);
+                println!(
+                    "Bind program uniform buffer {} to the binding point {}",
+                    u, gl_uindex
+                );
                 gl::UniformBlockBinding(program.id(), u as u32, gl_uindex);
             }
-            utils::check_errors().expect("Bound uniform for material");
+            utils::check_errors().expect("Bound uniform");
         }
         Ok(())
+    }
+
+    //mp program_use_texture
+    /// Requires the program to be 'used'
+    fn program_use_texture(
+        &mut self,
+        program: &<Self as Gl>::Program,
+        texture_id: crate::TextureId,
+        gl_texture: &<Self as Gl>::Texture,
+    ) {
+        if let Some((u, unit)) = program.texture_uniform(texture_id) {
+            unsafe {
+                gl::ActiveTexture(gl::TEXTURE0 + unit);
+                gl::BindTexture(gl::TEXTURE_2D, gl_texture.gl_texture());
+                gl::Uniform1i(u as i32, unit as i32);
+            }
+        }
     }
 
     //mp draw_primitive
     fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
         // (if p.vertices_index different to last)
-        let index_type = vaos[primitive.vertices_index()].bind_vao();
+        // (if p.material_index ...
         use model3d_base::PrimitiveType::*;
         let gl_type = match primitive.primitive_type() {
             Points => gl::POINTS,
@@ -146,15 +188,29 @@ impl Gl for Model3DOpenGL {
             TriangleFan => gl::TRIANGLE_FAN,
             TriangleStrip => gl::TRIANGLE_STRIP,
         };
-        unsafe {
-            gl::DrawElements(
-                gl_type,
-                primitive.index_count() as i32,
-                index_type,
-                primitive.byte_offset() as *const std::ffi::c_void,
-            );
+
+        let opt_vertices_index: Option<usize> = primitive.vertices_index().into();
+        if let Some(vertices_index) = opt_vertices_index {
+            let index_type = vaos[vertices_index].bind_vao();
+            unsafe {
+                gl::DrawElements(
+                    gl_type,
+                    primitive.index_count() as i32,
+                    index_type,
+                    primitive.byte_offset() as *const std::ffi::c_void,
+                );
+            }
+        } else {
+            unsafe {
+                gl::DrawArrays(
+                    gl_type,
+                    primitive.byte_offset() as i32,
+                    primitive.index_count() as i32,
+                );
+            }
         }
     }
+
     //mp bind_vao
     fn bind_vao(&mut self, vao: Option<&Self::Vao>) {
         if let Some(vao) = vao {
@@ -215,7 +271,7 @@ impl Gl for Model3DOpenGL {
 impl model3d_base::Renderable for Model3DOpenGL {
     type Buffer = buffer::Buffer;
     type Accessor = crate::BufferView<Self>;
-    type Texture = crate::Texture;
+    type Texture = texture::Texture;
     type Material = crate::Material;
     type Vertices = crate::Vertices<Self>;
 
@@ -253,11 +309,29 @@ impl model3d_base::Renderable for Model3DOpenGL {
         Self::Vertices::create(vertices, self)
     }
 
+    //mp create_texture_client
+    fn create_texture_client(&mut self, texture: &model3d_base::Texture<Self>) -> Self::Texture {
+        eprintln!("Create texture client");
+        Self::Texture::of_texture(texture) // , self)
+    }
+
+    fn create_material_client<M>(
+        &mut self,
+        object: &model3d_base::Object<M, Self>,
+        material: &M,
+    ) -> crate::Material
+    where
+        M: model3d_base::Material,
+    {
+        eprintln!("Create material client");
+        crate::Material::create(self, object, material).unwrap()
+    }
+
     //mp init_material_client
-    fn init_material_client(
+    fn init_material_client<M: model3d_base::Material>(
         &mut self,
         _client: &mut Self::Material,
-        _material: &dyn model3d_base::Material<Self>,
+        _material: &M,
     ) {
     }
 

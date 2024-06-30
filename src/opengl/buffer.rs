@@ -129,19 +129,10 @@ impl Buffer {
             }
         };
         unsafe {
-            dbg!(self.gl_buffer());
-            dbg!(attr_id);
-            dbg!(ele_type);
-            dbg!(count);
-            dbg!(stride);
-            dbg!(byte_offset);
-            eprintln!("Bind");
             gl::BindBuffer(gl::ARRAY_BUFFER, self.gl_buffer());
             crate::opengl_utils::check_errors().unwrap();
-            eprintln!("evaa");
             gl::EnableVertexAttribArray(attr_id);
             crate::opengl_utils::check_errors().unwrap();
-            eprintln!("vap");
             gl::VertexAttribPointer(
                 attr_id,
                 count as i32, // size
@@ -151,7 +142,6 @@ impl Buffer {
                 byte_offset as usize as *const std::ffi::c_void,
             );
             crate::opengl_utils::check_errors().unwrap();
-            eprintln!("done");
         }
     }
 
