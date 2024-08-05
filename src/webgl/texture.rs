@@ -1,7 +1,7 @@
 //a Imports
 use std::rc::Rc;
 
-use model3d_base::TextureClient;
+use mod3d_base::TextureClient;
 
 use super::Model3DWebGL;
 use web_sys::{WebGl2RenderingContext, WebGlTexture};
@@ -46,7 +46,7 @@ impl Texture {
     //mp of_texture
     /// Create a texture
     pub fn of_texture(
-        texture: &model3d_base::Texture<Model3DWebGL>,
+        texture: &mod3d_base::Texture<Model3DWebGL>,
         render_context: &WebGl2RenderingContext,
     ) -> Self {
         let (width, height, depth) = *texture.dims();
@@ -64,10 +64,10 @@ impl Texture {
         };
         let data_type = {
             match data_type.1 {
-                model3d_base::BufferElementType::Int8 => WebGl2RenderingContext::UNSIGNED_BYTE,
-                model3d_base::BufferElementType::Int16 => WebGl2RenderingContext::UNSIGNED_SHORT,
-                model3d_base::BufferElementType::Float16 => WebGl2RenderingContext::SHORT,
-                model3d_base::BufferElementType::Float32 => WebGl2RenderingContext::FLOAT,
+                mod3d_base::BufferElementType::Int8 => WebGl2RenderingContext::UNSIGNED_BYTE,
+                mod3d_base::BufferElementType::Int16 => WebGl2RenderingContext::UNSIGNED_SHORT,
+                mod3d_base::BufferElementType::Float16 => WebGl2RenderingContext::SHORT,
+                mod3d_base::BufferElementType::Float32 => WebGl2RenderingContext::FLOAT,
                 _ => WebGl2RenderingContext::UNSIGNED_BYTE,
             }
         };

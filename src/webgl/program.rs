@@ -20,7 +20,7 @@ pub struct Program {
     /// The GL ID of the program
     program: WebGlProgram,
     /// attribute names
-    attributes: Vec<(u32, model3d_base::VertexAttr)>,
+    attributes: Vec<(u32, mod3d_base::VertexAttr)>,
     /// uniform names
     uniforms: Vec<(WebGlUniformLocation, UniformId)>,
     /// uniform buffer names
@@ -80,7 +80,7 @@ impl Program {
         &mut self,
         context: &WebGl2RenderingContext,
         name: &str,
-        vertex_attr: model3d_base::VertexAttr,
+        vertex_attr: mod3d_base::VertexAttr,
     ) -> Result<&mut Self, String> {
         let attr_index = context.get_attrib_location(&self.program, name);
         if attr_index < 0 {
@@ -164,7 +164,7 @@ impl GlProgram for Program {
     type GlAttrId = u32;
     type GlUniformId<'a> = &'a WebGlUniformLocation;
     // type Context = WebGl2RenderingContext;
-    fn attributes(&self) -> &[(Self::GlAttrId, model3d_base::VertexAttr)] {
+    fn attributes(&self) -> &[(Self::GlAttrId, mod3d_base::VertexAttr)] {
         &self.attributes
     }
     fn uniform(&self, uniform_id: UniformId) -> Option<Self::GlUniformId<'_>> {

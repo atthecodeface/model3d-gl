@@ -17,13 +17,13 @@ use crate::webgl_log::log_gl_vao;
 #[derive(Debug)]
 pub struct Vao {
     gl_vao: Box<WebGlVertexArrayObject>,
-    index_type: gl::types::GLuint,
+    index_type: u32,
 }
 
 //ip Vao
 impl Vao {
     //fp bind_vao
-    pub fn bind_vao(&self, render_context: &Model3DWebGL) -> gl::types::GLuint {
+    pub fn bind_vao(&self, render_context: &Model3DWebGL) -> u32 {
         render_context.bind_vertex_array(Some(&self.gl_vao));
         log_gl_vao(
             render_context,
@@ -42,9 +42,9 @@ impl Vao {
         let gl_vao = render_context.create_vertex_array().unwrap().into();
         let index_type = {
             match indices.ele_type {
-                model3d_base::BufferElementType::Int16 => WebGl2RenderingContext::UNSIGNED_SHORT,
-                model3d_base::BufferElementType::Int32 => WebGl2RenderingContext::UNSIGNED_INT,
-                _ => gl::UNSIGNED_BYTE,
+                mod3d_base::BufferElementType::Int16 => WebGl2RenderingContext::UNSIGNED_SHORT,
+                mod3d_base::BufferElementType::Int32 => WebGl2RenderingContext::UNSIGNED_INT,
+                _ => WebGl2RenderingContext::UNSIGNED_INT,
             }
         };
         let vao = Self { gl_vao, index_type };

@@ -40,8 +40,8 @@ impl Vao {
         utils::check_errors().expect("Added indices to VAO");
         let index_type = {
             match indices.ele_type {
-                model3d_base::BufferElementType::Int16 => gl::UNSIGNED_SHORT,
-                model3d_base::BufferElementType::Int32 => gl::UNSIGNED_INT,
+                mod3d_base::BufferElementType::Int16 => gl::UNSIGNED_SHORT,
+                mod3d_base::BufferElementType::Int32 => gl::UNSIGNED_INT,
                 _ => gl::UNSIGNED_BYTE,
             }
         };

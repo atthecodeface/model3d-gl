@@ -55,7 +55,7 @@ impl Gl for Model3DWebGL {
     fn link_program(
         &self,
         srcs: &[&Self::Shader],
-        named_attrs: &[(&str, model3d_base::VertexAttr)],
+        named_attrs: &[(&str, mod3d_base::VertexAttr)],
         named_uniforms: &[(&str, crate::UniformId)],
         named_uniform_buffers: &[(&str, usize)],
         named_textures: &[(&str, crate::TextureId, usize)],
@@ -100,7 +100,7 @@ impl Gl for Model3DWebGL {
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
-        view: &model3d_base::BufferAccessor<Self>,
+        view: &mod3d_base::BufferAccessor<Self>,
     ) {
         buffer.of_indices(view, self);
     }
@@ -116,7 +116,7 @@ impl Gl for Model3DWebGL {
         buffer: &<Self as Gl>::Buffer,
         attr_id: &<Program as GlProgram>::GlAttrId,
         count: u32,
-        ele_type: model3d_base::BufferElementType,
+        ele_type: mod3d_base::BufferElementType,
         byte_offset: u32,
         stride: u32,
     ) {
@@ -180,9 +180,9 @@ impl Gl for Model3DWebGL {
     }
 
     //mp draw_primitive
-    fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
+    fn draw_primitive(&mut self, vaos: &[Vao], primitive: &mod3d_base::Primitive) {
         console_log!("webgl: draw_primitive {primitive:?}");
-        use model3d_base::PrimitiveType::*;
+        use mod3d_base::PrimitiveType::*;
         let gl_type = match primitive.primitive_type() {
             Points => WebGl2RenderingContext::POINTS,
             Lines => WebGl2RenderingContext::LINES,
@@ -263,8 +263,8 @@ impl Gl for Model3DWebGL {
     }
 }
 
-//ip model3d_base::Renderable for Model3DWebGL
-impl model3d_base::Renderable for Model3DWebGL {
+//ip mod3d_base::Renderable for Model3DWebGL
+impl mod3d_base::Renderable for Model3DWebGL {
     type Buffer = buffer::Buffer;
     type Accessor = crate::BufferView<Self>;
     type Texture = texture::Texture;
@@ -279,7 +279,7 @@ impl model3d_base::Renderable for Model3DWebGL {
     fn init_buffer_data_client(
         &mut self,
         client: &mut Self::Buffer,
-        buffer_data: &model3d_base::BufferData<Self>,
+        buffer_data: &mod3d_base::BufferData<Self>,
     ) {
         if client.is_none() {
             client.of_data(buffer_data, self)
@@ -291,27 +291,24 @@ impl model3d_base::Renderable for Model3DWebGL {
     fn init_buffer_view_client(
         &mut self,
         client: &mut Self::Accessor,
-        buffer_view: &model3d_base::BufferAccessor<Self>,
-        attr: model3d_base::VertexAttr,
+        buffer_view: &mod3d_base::BufferAccessor<Self>,
+        attr: mod3d_base::VertexAttr,
     ) {
         client.init_buffer_view_client(buffer_view, attr, self);
     }
 
     //mp create_vertices_client
-    fn create_vertices_client(
-        &mut self,
-        vertices: &model3d_base::Vertices<Self>,
-    ) -> Self::Vertices {
+    fn create_vertices_client(&mut self, vertices: &mod3d_base::Vertices<Self>) -> Self::Vertices {
         Self::Vertices::create(vertices, self)
     }
 
     //mp create_texture_client
-    fn create_texture_client(&mut self, texture: &model3d_base::Texture<Self>) -> Self::Texture {
+    fn create_texture_client(&mut self, texture: &mod3d_base::Texture<Self>) -> Self::Texture {
         Self::Texture::of_texture(texture, self) // , self)
     }
 
     //mp init_material_client
-    fn init_material_client<M: model3d_base::Material>(
+    fn init_material_client<M: mod3d_base::Material>(
         &mut self,
         _client: &mut Self::Material,
         _material: &M,
@@ -320,11 +317,11 @@ impl model3d_base::Renderable for Model3DWebGL {
 
     fn create_material_client<M>(
         &mut self,
-        object: &model3d_base::Object<M, Self>,
+        object: &mod3d_base::Object<M, Self>,
         material: &M,
     ) -> crate::Material
     where
-        M: model3d_base::Material,
+        M: mod3d_base::Material,
     {
         crate::Material::create(self, object, material).unwrap()
     }

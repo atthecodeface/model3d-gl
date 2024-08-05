@@ -1,7 +1,7 @@
 //a Imports
 use std::marker::PhantomData;
 
-use model3d_base::{BufferElementType, VertexAttr};
+use mod3d_base::{BufferAccessor, BufferElementType, VertexAttr};
 
 use crate::{Gl, GlProgram};
 
@@ -27,7 +27,7 @@ where
     /// For indices: number of indices in the buffer
     pub elements_per_data: u32,
     /// The type of each element
-    pub ele_type: model3d_base::BufferElementType,
+    pub ele_type: BufferElementType,
     /// Offset from start of buffer to first byte of data
     pub byte_offset: u32,
     /// Stride of data in the buffer - 0 for elements_per_data*sizeof(ele_type)
@@ -48,7 +48,7 @@ where
 
     //mp of_view
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    fn of_view(&mut self, view: &model3d_base::BufferAccessor<G>, render_context: &mut G) {
+    fn of_view(&mut self, view: &BufferAccessor<G>, render_context: &mut G) {
         view.data.create_client(render_context);
         self.elements_per_data = view.elements_per_data;
         self.ele_type = view.ele_type;
@@ -197,7 +197,7 @@ where
 {
     //mp of_view
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    fn of_view(view: &model3d_base::BufferAccessor<G>, render_context: &mut G) -> Self {
+    fn of_view(view: &BufferAccessor<G>, render_context: &mut G) -> Self {
         let mut gl_buffer = <G as Gl>::Buffer::default();
         render_context.init_buffer_of_indices(&mut gl_buffer, view);
         let count = view.elements_per_data;
@@ -303,7 +303,7 @@ where
     /// Create the OpenGL ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
     pub fn init_buffer_view_client(
         &mut self,
-        view: &model3d_base::BufferAccessor<G>,
+        view: &BufferAccessor<G>,
         attr: VertexAttr,
         renderer: &mut G,
     ) {
@@ -322,7 +322,7 @@ where
 }
 
 //ip AccessorClient for BufferView
-impl<G> model3d_base::AccessorClient for BufferView<G> where G: Gl {}
+impl<G> mod3d_base::AccessorClient for BufferView<G> where G: Gl {}
 
 //ip Display for BufferView
 impl<G> std::fmt::Display for BufferView<G>

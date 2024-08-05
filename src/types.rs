@@ -81,8 +81,8 @@ impl std::str::FromStr for TextureId {
 }
 
 impl TextureId {
-    pub fn of_material_aspect(m: model3d_base::MaterialAspect) -> Self {
-        use model3d_base::MaterialAspect::*;
+    pub fn of_material_aspect(m: mod3d_base::MaterialAspect) -> Self {
+        use mod3d_base::MaterialAspect::*;
         #[allow(unreachable_patterns)]
         match m {
             Color => Self::BaseColor,

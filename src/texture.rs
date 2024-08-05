@@ -12,4 +12,4 @@ impl std::fmt::Display for Texture {
 }
 
 //ip TextureClient for Texture
-impl model3d_base::TextureClient for Texture {}
+impl mod3d_base::TextureClient for Texture {}

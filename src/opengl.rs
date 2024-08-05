@@ -1,3 +1,5 @@
+use mod3d_base::{BufferAccessor, BufferElementType, VertexAttr};
+
 use crate::{Gl, GlProgram, GlShaderType, Mat4, UniformBuffer};
 
 mod shader;
@@ -45,7 +47,7 @@ impl Gl for Model3DOpenGL {
     fn link_program(
         &self,
         srcs: &[&Self::Shader],
-        named_attrs: &[(&str, model3d_base::VertexAttr)],
+        named_attrs: &[(&str, VertexAttr)],
         named_uniforms: &[(&str, crate::UniformId)],
         named_uniform_buffers: &[(&str, usize)],
         named_textures: &[(&str, crate::TextureId, usize)],
@@ -91,7 +93,7 @@ impl Gl for Model3DOpenGL {
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
-        view: &model3d_base::BufferAccessor<Self>,
+        view: &BufferAccessor<Self>,
     ) {
         buffer.of_indices(view);
     }
@@ -107,7 +109,7 @@ impl Gl for Model3DOpenGL {
         buffer: &<Self as Gl>::Buffer,
         attr_id: &<Program as GlProgram>::GlAttrId,
         count: u32,
-        ele_type: model3d_base::BufferElementType,
+        ele_type: BufferElementType,
         byte_offset: u32,
         stride: u32,
     ) {
@@ -175,10 +177,10 @@ impl Gl for Model3DOpenGL {
     }
 
     //mp draw_primitive
-    fn draw_primitive(&mut self, vaos: &[Vao], primitive: &model3d_base::Primitive) {
+    fn draw_primitive(&mut self, vaos: &[Vao], primitive: &mod3d_base::Primitive) {
         // (if p.vertices_index different to last)
         // (if p.material_index ...
-        use model3d_base::PrimitiveType::*;
+        use mod3d_base::PrimitiveType::*;
         let gl_type = match primitive.primitive_type() {
             Points => gl::POINTS,
             Lines => gl::LINES,
@@ -267,8 +269,8 @@ impl Gl for Model3DOpenGL {
     }
 }
 
-//ip model3d_base::Renderable for Model3DOpenGL
-impl model3d_base::Renderable for Model3DOpenGL {
+//ip mod3d_base::Renderable for Model3DOpenGL
+impl mod3d_base::Renderable for Model3DOpenGL {
     type Buffer = buffer::Buffer;
     type Accessor = crate::BufferView<Self>;
     type Texture = texture::Texture;
@@ -283,7 +285,7 @@ impl model3d_base::Renderable for Model3DOpenGL {
     fn init_buffer_data_client(
         &mut self,
         client: &mut Self::Buffer,
-        buffer_data: &model3d_base::BufferData<Self>,
+        buffer_data: &mod3d_base::BufferData<Self>,
     ) {
         if client.is_none() {
             client.of_data(buffer_data)
@@ -295,40 +297,37 @@ impl model3d_base::Renderable for Model3DOpenGL {
     fn init_buffer_view_client(
         &mut self,
         client: &mut Self::Accessor,
-        buffer_view: &model3d_base::BufferAccessor<Self>,
-        attr: model3d_base::VertexAttr,
+        buffer_view: &BufferAccessor<Self>,
+        attr: VertexAttr,
     ) {
         client.init_buffer_view_client(buffer_view, attr, self);
     }
 
     //mp create_vertices_client
-    fn create_vertices_client(
-        &mut self,
-        vertices: &model3d_base::Vertices<Self>,
-    ) -> Self::Vertices {
+    fn create_vertices_client(&mut self, vertices: &mod3d_base::Vertices<Self>) -> Self::Vertices {
         Self::Vertices::create(vertices, self)
     }
 
     //mp create_texture_client
-    fn create_texture_client(&mut self, texture: &model3d_base::Texture<Self>) -> Self::Texture {
+    fn create_texture_client(&mut self, texture: &mod3d_base::Texture<Self>) -> Self::Texture {
         eprintln!("Create texture client");
         Self::Texture::of_texture(texture) // , self)
     }
 
     fn create_material_client<M>(
         &mut self,
-        object: &model3d_base::Object<M, Self>,
+        object: &mod3d_base::Object<M, Self>,
         material: &M,
     ) -> crate::Material
     where
-        M: model3d_base::Material,
+        M: mod3d_base::Material,
     {
         eprintln!("Create material client");
         crate::Material::create(self, object, material).unwrap()
     }
 
     //mp init_material_client
-    fn init_material_client<M: model3d_base::Material>(
+    fn init_material_client<M: mod3d_base::Material>(
         &mut self,
         _client: &mut Self::Material,
         _material: &M,

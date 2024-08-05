@@ -12,7 +12,7 @@ This library provides structures for OpenGL shaders ...
 !*/
 
 //a Imports and exports
-pub use model3d_base::{Mat3, Mat4, Quat, Transformation, Vec3, Vec4};
+pub use mod3d_base::{Mat3, Mat4, Quat, Transformation, Vec3, Vec4};
 
 mod types;
 pub use types::{TextureId, UniformId};

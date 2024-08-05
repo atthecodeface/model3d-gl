@@ -1,6 +1,6 @@
 //a Imports
 use super::Model3DOpenGL;
-use model3d_base::{BufferClient, BufferData, BufferElementType};
+use mod3d_base::{BufferClient, BufferData, BufferElementType};
 use std::rc::Rc;
 
 //a Buffer
@@ -11,11 +11,11 @@ use std::rc::Rc;
 ///
 /// Its actual buffer is created from vertex data or from indices;
 /// from vertex data it is created *only* on the first invocation
-/// (from a [model3d_base::BufferData]) as subsequent 'creations' will be
+/// (from a [mod3d_base::BufferData]) as subsequent 'creations' will be
 /// duplicates - the reference count should ont be changed either as
 /// it is the *same* BufferData instance that is invoking the creation
 ///
-/// For indices a buffer is created for the [model3d_base::BufferAccessor], as
+/// For indices a buffer is created for the [mod3d_base::BufferAccessor], as
 /// the buffer in this case must be an OpenGL ELEMENT_ARRAY_BUFFER;
 /// this could perhaps be optimized to reduce the number of OpenGL
 /// buffers with much more code.
@@ -77,7 +77,7 @@ impl Buffer {
 
     //mp of_indices
     /// Create the OpenGL ELEMENT_ARRAY_BUFFER buffer using STATIC_DRAW - this copies the data in to OpenGL
-    pub fn of_indices(&mut self, view: &model3d_base::BufferAccessor<Model3DOpenGL>) {
+    pub fn of_indices(&mut self, view: &mod3d_base::BufferAccessor<Model3DOpenGL>) {
         assert!(self.is_none());
         let mut gl: gl::types::GLuint = 0;
         let ele_size = {
@@ -114,7 +114,7 @@ impl Buffer {
         &self,
         attr_id: gl::types::GLuint,
         count: u32,
-        ele_type: model3d_base::BufferElementType,
+        ele_type: mod3d_base::BufferElementType,
         byte_offset: u32,
         stride: u32,
     ) {

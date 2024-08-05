@@ -1,7 +1,7 @@
 //a Imports
 use std::rc::Rc;
 
-use model3d_base::TextureClient;
+use mod3d_base::TextureClient;
 
 use crate::Model3DOpenGL;
 
@@ -50,7 +50,7 @@ impl Texture {
 
     //mp of_texture
     /// Create a texture
-    pub fn of_texture(texture: &model3d_base::Texture<Model3DOpenGL>) -> Self {
+    pub fn of_texture(texture: &mod3d_base::Texture<Model3DOpenGL>) -> Self {
         let mut gl: gl::types::GLuint = 0;
         let (width, height, depth) = *texture.dims();
         assert!(depth == 0);
@@ -67,10 +67,10 @@ impl Texture {
         };
         let data_type = {
             match data_type.1 {
-                model3d_base::BufferElementType::Int8 => gl::UNSIGNED_BYTE,
-                model3d_base::BufferElementType::Int16 => gl::UNSIGNED_SHORT,
-                model3d_base::BufferElementType::Float16 => gl::SHORT,
-                model3d_base::BufferElementType::Float32 => gl::FLOAT,
+                mod3d_base::BufferElementType::Int8 => gl::UNSIGNED_BYTE,
+                mod3d_base::BufferElementType::Int16 => gl::UNSIGNED_SHORT,
+                mod3d_base::BufferElementType::Float16 => gl::SHORT,
+                mod3d_base::BufferElementType::Float32 => gl::FLOAT,
                 _ => gl::UNSIGNED_BYTE,
             }
         };

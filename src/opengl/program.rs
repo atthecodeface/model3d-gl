@@ -20,7 +20,7 @@ pub struct Program {
     /// The GL ID of the program
     id: gl::types::GLuint,
     /// attribute map
-    attributes: Vec<(gl::types::GLuint, model3d_base::VertexAttr)>,
+    attributes: Vec<(gl::types::GLuint, mod3d_base::VertexAttr)>,
     /// uniform map from UniformId to location
     uniforms: Vec<(gl::types::GLint, UniformId)>,
     /// texture map from TextureId to uniform location and unit
@@ -135,7 +135,7 @@ impl Program {
     pub fn add_attr_name(
         &mut self,
         name: &str,
-        vertex_attr: model3d_base::VertexAttr,
+        vertex_attr: mod3d_base::VertexAttr,
     ) -> Result<&mut Self, String> {
         let name_c = CString::new(name).unwrap();
         let attr_index = unsafe { gl::GetAttribLocation(self.id, name_c.as_ptr()) };
@@ -238,7 +238,7 @@ impl Drop for Program {
 impl crate::GlProgram for Program {
     type GlAttrId = gl::types::GLuint;
     type GlUniformId<'a> = gl::types::GLint;
-    fn attributes(&self) -> &[(gl::types::GLuint, model3d_base::VertexAttr)] {
+    fn attributes(&self) -> &[(gl::types::GLuint, mod3d_base::VertexAttr)] {
         &self.attributes
     }
     fn uniform(&self, uniform_id: UniformId) -> Option<gl::types::GLint> {

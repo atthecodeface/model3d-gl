@@ -21,7 +21,7 @@ pub trait GlProgram: Sized {
     where
         Self: 'a;
     /// Borrow a slice of attribute / program attribute location pairings
-    fn attributes(&self) -> &[(Self::GlAttrId, model3d_base::VertexAttr)];
+    fn attributes(&self) -> &[(Self::GlAttrId, mod3d_base::VertexAttr)];
 
     /// Attempt to retrieve a uniform from a [UniformId] - return None
     /// if the shader program does not have that uniform
@@ -43,9 +43,9 @@ pub enum GlShaderType {
 /// copy of a [u8] that forms the values for vertices and indices etc.
 ///
 /// A single GlBuffer will be cloned for different
-/// model3d_base::BufferAccessor of the same BufferData (by the
+/// mod3d_base::BufferAccessor of the same BufferData (by the
 /// [VertexBuffer] type)
-pub trait GlBuffer: Default + Clone + std::fmt::Debug + model3d_base::BufferClient {}
+pub trait GlBuffer: Default + Clone + std::fmt::Debug + mod3d_base::BufferClient {}
 
 //tt GlVao
 /// The GlVao correlates to an OpenGl VAO buffer for a ShaderInstantiable mesh + GlProgram
@@ -59,7 +59,7 @@ pub trait GlVao: Sized {}
 /// The same is true of Clone, but that is too burdensome for Gl
 pub trait Gl:
     std::fmt::Debug
-    + model3d_base::Renderable<
+    + mod3d_base::Renderable<
         Buffer = <Self as Gl>::Buffer,
         Vertices = Vertices<Self>,
         Texture = <Self as Gl>::Texture,
@@ -80,7 +80,7 @@ pub trait Gl:
     fn link_program(
         &self,
         srcs: &[&Self::Shader],
-        named_attrs: &[(&str, model3d_base::VertexAttr)],
+        named_attrs: &[(&str, mod3d_base::VertexAttr)],
         named_uniforms: &[(&str, UniformId)],
         named_uniform_buffers: &[(&str, usize)],
         named_textures: &[(&str, crate::TextureId, usize)],
@@ -103,7 +103,7 @@ pub trait Gl:
     fn init_buffer_of_indices(
         &mut self,
         buffer: &mut <Self as Gl>::Buffer,
-        view: &model3d_base::BufferAccessor<Self>,
+        view: &mod3d_base::BufferAccessor<Self>,
     );
 
     //mp uniform_buffer_create
@@ -152,7 +152,7 @@ pub trait Gl:
         buffer: &<Self as Gl>::Buffer,
         attr_id: &<<Self as Gl>::Program as GlProgram>::GlAttrId,
         count: u32,
-        ele_type: model3d_base::BufferElementType,
+        ele_type: mod3d_base::BufferElementType,
         byte_offset: u32,
         stride: u32,
     );
@@ -196,7 +196,7 @@ pub trait Gl:
 
     //fp draw_primitive
     /// Draw the specified primitive using its VAO index into the vaos slice
-    fn draw_primitive(&mut self, vaos: &[Self::Vao], primitive: &model3d_base::Primitive);
+    fn draw_primitive(&mut self, vaos: &[Self::Vao], primitive: &mod3d_base::Primitive);
 
     //fp bind_vao
     fn bind_vao(&mut self, vao: Option<&Self::Vao>);

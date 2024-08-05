@@ -9,7 +9,7 @@ use crate::{Gl, IndexBuffer, VertexBuffer};
 ///
 /// This is part of the [RenderContext], and so has a different
 /// lifetime to the model3d objects and vertices. It is created by
-/// invoking create_client on a [model3d_rs::Object]
+/// invoking create_client on a [mod3d_rs::Object]
 #[derive(Debug)]
 pub struct Vertices<G>
 where
@@ -17,7 +17,7 @@ where
 {
     indices: Rc<IndexBuffer<G>>,
     position: Rc<VertexBuffer<G>>,
-    attrs: Rc<Vec<(model3d_base::VertexAttr, VertexBuffer<G>)>>,
+    attrs: Rc<Vec<(mod3d_base::VertexAttr, VertexBuffer<G>)>>,
 }
 
 //ip Clone for Vertices
@@ -43,8 +43,8 @@ where
     G: Gl,
 {
     //mp create
-    /// Create based on [model3d_rs::Vertices]
-    pub fn create(vertices: &model3d_base::Vertices<G>, _renderer: &mut G) -> Self {
+    /// Create based on [mod3d_rs::Vertices]
+    pub fn create(vertices: &mod3d_base::Vertices<G>, _renderer: &mut G) -> Self {
         let indices = vertices
             .borrow_indices()
             .borrow_client()
@@ -75,7 +75,7 @@ where
     ) -> (
         &IndexBuffer<G>,
         &VertexBuffer<G>,
-        &Vec<(model3d_base::VertexAttr, VertexBuffer<G>)>,
+        &Vec<(mod3d_base::VertexAttr, VertexBuffer<G>)>,
     ) {
         (&self.indices, &self.position, &self.attrs)
     }
@@ -111,4 +111,4 @@ where
 }
 
 //ip VerticesClient for Vertices
-impl<G> model3d_base::VerticesClient for Vertices<G> where G: Gl {}
+impl<G> mod3d_base::VerticesClient for Vertices<G> where G: Gl {}

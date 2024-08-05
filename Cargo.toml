@@ -1,7 +1,14 @@
 [package]
-name = "model3d-gl"
+name = "mod3d-gl"
 version = "0.1.0"
-edition = "2021"
+edition.workspace = true
+description.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [features]
 default = ["webgl", "opengl", "serde"]
@@ -10,30 +17,30 @@ opengl = ["dep:gl"]
 serde = ["dep:serde"]
 
 [dependencies]
-geo-nd   = "0.1.0"
-indent-display = "0.1.1"
-model3d-base = { path="../model3d-base" }
+geo-nd.workspace = true
+indent-display.workspace = true
+mod3d-base.workspace = true
 
 [dependencies.serde]
 optional = true
-version = ">=1.0.203"
+workspace = true
 features = ["derive"]
 
 [dependencies.gl]
 optional = true
-version = ">=0.14.0"
+workspace = true
 
 [dependencies.wasm-bindgen]
 optional = true
-version = ">=0.2.92"
+workspace = true
 
 [dependencies.js-sys]
 optional = true
-version = ">=0.3.64"
+workspace = true
 
 [dependencies.web-sys]
 optional = true
-version = ">=0.3.69"
+workspace = true
 features = [
   'console',
   'CanvasRenderingContext2d',
@@ -52,4 +59,3 @@ features = [
   'WebGlUniformLocation',
   'Window',
 ]
-
